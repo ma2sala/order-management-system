@@ -848,7 +848,7 @@
     });
   }
 
-  let editingStaffId = null;
+  let editingStaffId = null; let editingStaffIsActive = true;
   const editStaffModal = document.getElementById('editStaffModal');
   const editStaffForm = document.getElementById('editStaffForm');
   const editStaffError = document.getElementById('editStaffError');
@@ -857,7 +857,7 @@
   function openEditStaffModal(id) {
     const staffUser = staffList.find((u) => u.id === id);
     if (!staffUser) return;
-    editingStaffId = id;
+    editingStaffId = id; editingStaffIsActive = staffUser.isActive;
     editStaffError.textContent = '';
     document.getElementById('editStaffName').value = staffUser.name;
     document.getElementById('editStaffEmail').value = staffUser.email;
@@ -878,7 +878,7 @@
     }
 
     try {
-      await api(`/api/users/${editingStaffId}`, { method: 'PATCH', body: JSON.stringify({ name, email }) });
+      await api(`/api/users/${editingStaffId}`, { method: 'PATCH', body: JSON.stringify({ name, email, isActive: editingStaffIsActive }) });
       editStaffModal.classList.add('hidden');
       showToast('Account updated');
       loadStaff();
