@@ -10,8 +10,10 @@ body {
   align-items: flex-start;
   justify-content: space-between;
   padding: 14px 16px;
-  background: var(--ink);
-  border-bottom: 1px solid var(--hairline);
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .app-title {
@@ -31,11 +33,21 @@ body {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: var(--surface-raised);
+  background: var(--glass-fill-light);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid var(--glass-border);
   font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
 }
 
 .icon-btn:active {
@@ -66,16 +78,18 @@ body {
   width: 280px;
   max-height: 320px;
   overflow-y: auto;
-  background: var(--surface-raised);
-  border: 1px solid var(--hairline);
-  border-radius: 12px;
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
   padding: 8px;
   z-index: 40;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+  box-shadow: var(--glass-shadow);
 }
 
 .notif-item {
-  background: var(--surface);
+  background: var(--glass-fill-light);
   border-radius: 8px;
   padding: 10px;
   margin-bottom: 6px;
@@ -109,14 +123,26 @@ body {
   flex: 1;
   padding: 11px;
   border-radius: 10px;
-  background: var(--surface-raised);
+  background: var(--glass-fill-light);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid var(--glass-border);
   color: var(--text-muted);
   font-weight: 600;
   font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn:hover {
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
 }
 
 .toggle-btn.active {
-  background: var(--signal);
+  background: var(--accent-glass);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border-color: rgba(255, 255, 255, 0.25);
   color: #fff;
 }
 
@@ -144,18 +170,23 @@ body {
   flex-shrink: 0;
   min-width: 56px;
   height: 56px;
-  border-radius: 12px;
-  background: var(--surface-raised);
-  border: 1px solid var(--hairline);
+  border-radius: var(--glass-radius);
+  background: var(--glass-fill-light);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid var(--glass-border);
   color: var(--paper);
   font-weight: 700;
   font-family: var(--font-mono);
   font-size: 16px;
+  transition: all 0.2s ease;
 }
 
 .chip.selected {
-  background: var(--signal);
-  border-color: var(--signal);
+  background: var(--accent-glass);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border-color: rgba(255, 255, 255, 0.25);
   color: #fff;
 }
 
@@ -170,7 +201,7 @@ body {
   overflow-x: auto;
   position: sticky;
   top: 73px;
-  background: var(--ink);
+  background: transparent;
   z-index: 20;
 }
 
@@ -181,15 +212,20 @@ body {
   gap: 6px;
   padding: 10px 16px;
   border-radius: 999px;
-  background: var(--surface-raised);
+  background: var(--glass-fill-light);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid var(--glass-border);
   color: var(--text-muted);
   font-weight: 600;
   font-size: 14px;
+  transition: all 0.2s ease;
 }
 
 .category-pill.active {
-  background: var(--paper);
-  color: var(--text-paper);
+  background: var(--glass-fill-hover);
+  border-color: var(--paper);
+  color: var(--paper);
 }
 
 .category-pill:active {
@@ -201,8 +237,11 @@ body {
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  border-radius: 12px;
-  background: var(--surface-raised);
+  border-radius: var(--glass-radius);
+  background: var(--glass-fill-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--danger, #e5484d);
   color: var(--danger, #e5484d);
   font-size: 14px;
   font-weight: 600;
@@ -212,11 +251,13 @@ body {
   flex-shrink: 0;
   padding: 6px 14px;
   border-radius: 999px;
-  background: var(--paper);
-  color: var(--text-paper);
+  background: var(--accent-glass);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  color: #fff;
   font-weight: 600;
   font-size: 13px;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.25);
   cursor: pointer;
 }
 
@@ -228,14 +269,23 @@ body {
 }
 
 .menu-card {
-  background: var(--surface-raised);
-  border: 1px solid var(--hairline);
-  border-radius: 12px;
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--glass-radius);
   padding: 14px;
   min-height: 104px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  transition: all 0.2s ease;
+}
+
+.menu-card:hover {
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
 }
 
 .menu-card .name {
@@ -258,10 +308,14 @@ body {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: var(--signal);
+  background: var(--accent-glass);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   color: #fff;
   font-size: 20px;
   font-weight: 700;
+  transition: all 0.2s ease;
 }
 
 .add-btn:active {
@@ -274,16 +328,21 @@ body {
   right: 16px;
   bottom: 96px;
   padding: 12px;
-  border-radius: 12px;
-  background: var(--surface-raised);
+  border-radius: var(--glass-radius);
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   color: var(--wait);
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--glass-border);
   text-align: center;
   font-size: 13px;
   font-weight: 600;
 }
 
-/* ---------------- Orders view (tickets) ---------------- */
+/* ---------------- Orders view (tickets) ----------------
+   Intentionally kept as solid, opaque "paper" cards rather than glass —
+   these are styled to look like a physical receipt (perforated edge and
+   all), and a frosted-glass paper ticket would undercut that look. */
 .orders-list {
   padding: 16px;
   display: flex;
@@ -306,6 +365,7 @@ body {
   padding: 16px;
   overflow: hidden;
   animation: fadeInUp 0.25s ease-out;
+  box-shadow: var(--glass-shadow);
 }
 
 .ticket-perforation {
@@ -393,7 +453,8 @@ body {
   opacity: 0.75;
 }
 
-/* ---------------- Basket bottom sheet ---------------- */
+/* ---------------- Basket bottom sheet ----------------
+   Also kept as solid paper, matching the ticket cards above. */
 .basket-sheet {
   position: fixed;
   left: 0;
@@ -495,10 +556,14 @@ body {
   width: 100%;
   padding: 16px;
   border-radius: 12px;
-  background: var(--signal);
+  background: var(--accent-glass);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   color: #fff;
   font-weight: 700;
   font-size: 15px;
+  transition: all 0.2s ease;
 }
 
 .send-btn:disabled {
@@ -515,10 +580,10 @@ body {
   top: 76px;
   left: 16px;
   right: 16px;
-  z-index: 9999; /* must stay above .modal-overlay's z-index: 1000, or a
-                    toast fired while a modal is open renders behind it
-                    and is invisible — this was the actual bug reported */
-  background: var(--surface-raised);
+  z-index: 9999;
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--go);
   border-radius: 12px;
   padding: 12px 14px;
@@ -526,22 +591,20 @@ body {
   font-weight: 500;
   color: var(--paper);
   animation: toastIn 0.2s ease-out;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+  box-shadow: var(--glass-shadow);
 }
-
 
 /* ---------------- Customize item modal ---------------- */
 .modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  z-index: 1000; /* above the mobile checkout bar's z-index: 100 (waiter.css
-                    mobile block) — that gap (60 vs 100) was the actual bug:
-                    the fixed checkout bar was rendering on top of this modal
-                    on mobile, covering the Add button underneath it. */
+  z-index: 1000;
 }
 
 .modal-card {
@@ -550,11 +613,12 @@ body {
   max-height: 85vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* the scrolling body below handles its own scroll —
-                        the modal shell itself shouldn't scroll as one
-                        block, or the action bar could scroll out of view */
-  background: var(--surface-raised);
-  border: 1px solid var(--hairline);
+  overflow: hidden;
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
   border-radius: 20px 20px 0 0;
   padding: 22px 20px 24px;
 }
@@ -562,7 +626,7 @@ body {
 .modal-card-body {
   overflow-y: auto;
   flex: 1;
-  min-height: 0; /* required in a flex column for the child to actually shrink/scroll instead of pushing the footer out */
+  min-height: 0;
 }
 
 .modal-title {
@@ -604,14 +668,19 @@ body {
   border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
-  background: var(--surface);
+  background: var(--glass-fill-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: var(--text-main);
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--glass-border);
+  transition: all 0.2s ease;
 }
 
 .option-chip.selected {
-  background: var(--signal);
-  border-color: var(--signal);
+  background: var(--accent-glass);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border-color: rgba(255, 255, 255, 0.25);
   color: #fff;
 }
 
@@ -632,10 +701,13 @@ body {
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border-radius: 12px;
-  background: var(--surface);
-  border: 1px solid var(--hairline);
+  border-radius: var(--glass-radius);
+  background: var(--glass-fill-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
   text-align: left;
+  transition: all 0.2s ease;
 }
 
 .ingredient-toggle-icon {
@@ -660,12 +732,12 @@ body {
 /* Base ingredients — included by default (light bg, red icon).
    Toggling off just grays the whole card out, no 'X' overlay. */
 .ingredient-card.remove-type .ingredient-toggle-icon {
-  background: var(--signal-dim);
+  background: rgba(122, 46, 28, 0.6);
   color: var(--danger);
 }
 
 .ingredient-card.remove-type.included {
-  background: var(--surface-raised);
+  background: var(--glass-fill-hover);
   border-color: var(--danger);
 }
 
@@ -674,7 +746,7 @@ body {
 }
 
 .ingredient-card.remove-type:not(.included) .ingredient-toggle-icon {
-  background: var(--surface);
+  background: var(--glass-fill-light);
   color: var(--text-muted);
 }
 
@@ -684,12 +756,12 @@ body {
 
 /* Extras — off by default (green plus), green highlight when selected */
 .ingredient-card.extra-type .ingredient-toggle-icon {
-  background: var(--surface-raised);
+  background: var(--glass-fill-light);
   color: var(--go);
 }
 
 .ingredient-card.extra-type.selected {
-  background: rgba(51, 196, 140, 0.14);
+  background: rgba(51, 196, 140, 0.18);
   border-color: var(--go);
 }
 
@@ -709,7 +781,7 @@ body {
   gap: 10px;
   margin-top: 6px;
   padding-top: 14px;
-  flex-shrink: 0; /* stays pinned below the scrollable body, never scrolls away */
+  flex-shrink: 0;
 }
 
 .modal-error {
@@ -732,10 +804,19 @@ body {
 .primary-btn {
   padding: 13px 16px;
   border-radius: 12px;
-  background: var(--signal);
+  background: var(--accent-glass);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   color: #fff;
   font-weight: 700;
   font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.primary-btn:hover {
+  background: rgba(255, 90, 60, 0.9);
+  transform: translateY(-1px);
 }
 
 .primary-btn:active {
@@ -745,11 +826,19 @@ body {
 .secondary-btn {
   padding: 13px 16px;
   border-radius: 12px;
-  background: var(--surface);
+  background: var(--glass-fill-light);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
   color: var(--text-main);
   font-weight: 700;
   font-size: 14px;
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--glass-border);
+  transition: all 0.2s ease;
+}
+
+.secondary-btn:hover {
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
 }
 
 /* Item customization summary shown under the name in basket & tickets */
@@ -775,7 +864,9 @@ body {
   margin-bottom: 4px;
 }
 .subcategory-pill {
-  background: transparent;
+  background: var(--glass-fill-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--wait, #f2b84b);
   color: var(--wait, #f2b84b);
   padding: 6px 14px;
@@ -783,9 +874,12 @@ body {
   font-size: 0.85rem;
   white-space: nowrap;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 .subcategory-pill.active {
-  background: var(--wait, #f2b84b);
+  background: rgba(242, 184, 75, 0.85);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
   color: #12151a;
   font-weight: 600;
 }
@@ -801,7 +895,9 @@ body {
   padding: 5px 12px;
 }
 .subsubcategory-pill.active {
-  background: var(--prog, #4ea1f2);
+  background: rgba(78, 161, 242, 0.85);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
   color: #12151a;
 }
 
@@ -815,12 +911,20 @@ body {
   margin: 12px 0;
 }
 .date-input {
-  background: var(--surface, #12151a);
+  background: var(--glass-fill-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: var(--text-main, #f3ecd8);
-  border: 1px solid var(--hairline, #2a2f3a);
+  border: 1px solid var(--glass-border);
   border-radius: 8px;
   padding: 6px 10px;
   font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+.date-input:focus {
+  outline: none;
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
 }
 
 /* --- Push the logout button away from the other header buttons --- */
@@ -866,8 +970,10 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: var(--surface, #12151a);
-  border-top: 1px solid var(--hairline, #2a2f3a);
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-top: 1px solid var(--glass-border);
   padding: 14px 16px;
   margin-top: 16px;
   border-radius: 12px 12px 0 0;
@@ -900,10 +1006,7 @@ body {
 }
 
 /* Only the top-level main-category row should stick to the header on
-   scroll. The sub-category and sub-sub-category rows inherited that same
-   sticky positioning from the shared .category-tabs class, which made
-   all three rows stack at the same spot and overlap — hiding the main
-   Drinks/Meals/Snacks row underneath the row(s) below it. */
+   scroll. */
 .category-tabs.subcategory-tabs {
   position: static;
   top: auto;
@@ -911,13 +1014,9 @@ body {
 }
 
 /* --- Two explicitly separate containers for the category filters --- */
-
-/* Container 1: main categories (Drinks / Meals / Snacks) — a fixed,
-   non-scrolling row. Only ever has 3 items, so it wraps instead of
-   scrolling, and gets a visible bottom border to mark it as its own bar. */
 .main-category-bar {
   padding: 16px 16px 12px;
-  border-bottom: 1px solid var(--hairline, #2a2f3a);
+  border-bottom: 1px solid var(--glass-border);
 }
 .main-category-bar .category-tabs {
   overflow-x: visible;
@@ -928,12 +1027,9 @@ body {
   z-index: auto;
 }
 
-/* Container 2: subcategories — a separate block below the main bar,
-   with its own background so it visually reads as a distinct section.
-   Each row inside it (sub, sub-sub) still scrolls horizontally on its own. */
 .sub-category-bar {
   padding: 10px 16px 4px;
-  background: var(--surface, #12151a);
+  background: transparent;
 }
 .sub-category-bar .category-tabs {
   padding: 0;
@@ -968,11 +1064,6 @@ body {
     gap: 8px;
   }
 
-  /* .main-category-bar .category-tabs normally forces flex-wrap: wrap
-     (see that rule above) so the top row reads fine on wider screens —
-     on phones that's what was causing Top Items/Drinks/Meals/Snacks to
-     stack across multiple lines. Override it here so the main row stays
-     a single horizontally-scrollable line like the sub-category rows. */
   .main-category-bar .category-tabs {
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -998,7 +1089,7 @@ body {
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
     padding: 6px 12px 20px;
-    padding-bottom: 70px; /* keeps items clear of the now-fixed checkout bar */
+    padding-bottom: 70px;
   }
 
   .menu-card {

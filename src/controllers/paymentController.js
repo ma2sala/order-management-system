@@ -13,14 +13,26 @@ const ORDER_WITH_BILL_DETAILS = {
   items: { include: { menuItem: { select: { name: true } } } },
 };
 
-// GET /api/payments/unpaid — cashier or manager
-// Completed, non-voided, not-yet-paid orders — these are the bills
-// waiting to be collected. Grouping into a single table's visit happens
-// client-side in cashier.js.
+// GET /api/payments/unpaid?date=YYYY-MM-DD — cashier or manager
+// Completed, non-voided, not-yet-paid orders. Without a date filter this
+// shows every unpaid bill regardless of age (unchanged default behavior).
+// With ?date=, it's cumulative — every unpaid bill created ON OR BEFORE
+// that date's end-of-day in Addis Ababa — so a cashier can filter back to
+// an earlier date and still see any older bill that's still unpaid,
+// rather than only that single day's completions.
 async function listUnpaid(req, res) {
   try {
+    const where = { status: 'COMPLETED', isVoided: false, isPaid: false };
+
+    const dateParam = req.query.date;
+    if (dateParam) {
+      const dayStart = addisDayStart(dateParam);
+      const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+      where.createdAt = { lt: dayEnd };
+    }
+
     const orders = await prisma.order.findMany({
-      where: { status: 'COMPLETED', isVoided: false, isPaid: false },
+      where,
       include: ORDER_WITH_BILL_DETAILS,
       orderBy: { createdAt: 'asc' },
     });

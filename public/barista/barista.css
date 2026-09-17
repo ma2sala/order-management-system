@@ -13,8 +13,10 @@ body {
   box-sizing: border-box;
   gap: 12px;
   padding: 16px 24px;
-  background: var(--ink);
-  border-bottom: 1px solid var(--hairline);
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .header-left {
@@ -49,9 +51,11 @@ body {
   gap: 8px;
   height: 48px;
   padding: 0 14px;
-  border-radius: 12px;
-  background: var(--surface-raised);
-  border: 1px solid var(--hairline);
+  border-radius: var(--glass-radius);
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid var(--glass-border);
   font-size: 14px;
   font-weight: 600;
   color: var(--text-main);
@@ -66,13 +70,22 @@ body {
 .icon-btn {
   width: 48px;
   height: 48px;
-  border-radius: 12px;
-  background: var(--surface-raised);
-  border: 1px solid var(--hairline);
+  border-radius: var(--glass-radius);
+  background: var(--glass-fill-light);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid var(--glass-border);
   font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
 }
 
 .icon-btn:active {
@@ -89,14 +102,27 @@ body {
 .toggle-btn {
   padding: 11px 20px;
   border-radius: 10px;
-  background: var(--surface-raised);
+  background: var(--glass-fill-light);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid var(--glass-border);
   color: var(--text-muted);
   font-weight: 700;
   font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn:hover {
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
 }
 
 .toggle-btn.active {
-  background: var(--signal);
+  background: var(--accent-glass);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border-color: rgba(255, 255, 255, 0.25);
   color: #fff;
 }
 
@@ -111,17 +137,22 @@ body {
   grid-column: 1 / -1;
   padding: 48px;
   text-align: center;
-  border-radius: 16px;
-  background: var(--surface);
-  border: 1px dashed var(--hairline);
+  border-radius: var(--glass-radius);
+  background: var(--glass-fill-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px dashed var(--glass-border);
   color: var(--text-muted);
 }
 
 .ticket {
-  border-radius: 16px;
+  border-radius: var(--glass-radius);
   padding: 16px;
-  background: var(--surface-raised);
-  border: 1px solid var(--hairline);
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -181,7 +212,9 @@ body {
 }
 
 .items-box {
-  background: var(--surface);
+  background: var(--glass-fill-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-radius: 10px;
   padding: 10px 12px;
   display: flex;
@@ -234,14 +267,22 @@ body {
   justify-content: center;
   gap: 8px;
   color: var(--ink);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  transition: all 0.2s ease;
 }
 
 .action-btn.start {
-  background: var(--wait);
+  background: rgba(242, 184, 75, 0.85);
 }
 
 .action-btn.complete {
-  background: var(--go);
+  background: rgba(51, 196, 140, 0.85);
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
 }
 
 .action-btn:active {
@@ -250,9 +291,11 @@ body {
 
 .completed-mini {
   padding: 14px;
-  border-radius: 12px;
-  background: var(--surface);
-  border: 1px solid var(--hairline);
+  border-radius: var(--glass-radius);
+  background: var(--glass-fill-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
 }
 
 .completed-mini .top {
@@ -270,7 +313,7 @@ body {
   font-weight: 700;
   padding: 3px 9px;
   border-radius: 999px;
-  background: var(--go);
+  background: rgba(51, 196, 140, 0.85);
   color: var(--ink);
 }
 
@@ -281,13 +324,22 @@ body {
 }
 
 .compact-date-picker {
-  background: var(--surface, #12151a);
-  color: var(--text-main, #f3ecd8);
-  border: 1px solid var(--hairline, #2a2f3a);
+  background: var(--glass-fill-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--text-main);
+  border: 1px solid var(--glass-border);
   border-radius: 8px;
   padding: 6px 10px;
   font-size: 0.85rem;
   width: fit-content;
+  transition: all 0.2s ease;
+}
+
+.compact-date-picker:focus {
+  outline: none;
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
 }
 
 /* ---------------- Mobile header (phones) ---------------- */

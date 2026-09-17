@@ -12,8 +12,10 @@ body {
   justify-content: space-between;
   gap: 12px;
   padding: 16px 24px;
-  background: var(--ink);
-  border-bottom: 1px solid var(--hairline);
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .header-left {
@@ -47,10 +49,19 @@ body {
 .icon-btn {
   width: 44px;
   height: 44px;
-  border-radius: 10px;
-  background: var(--surface-raised);
-  border: 1px solid var(--hairline);
+  border-radius: var(--glass-radius);
+  background: var(--glass-fill-light);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid var(--glass-border);
   font-size: 18px;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
 }
 
 .icon-btn:active {
@@ -66,14 +77,27 @@ body {
 .toggle-btn {
   padding: 10px 18px;
   border-radius: 10px;
-  background: var(--surface-raised);
+  background: var(--glass-fill-light);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid var(--glass-border);
   color: var(--text-muted);
   font-weight: 700;
   font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn:hover {
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
 }
 
 .toggle-btn.active {
-  background: var(--signal);
+  background: var(--accent-glass);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border-color: rgba(255, 255, 255, 0.25);
   color: #fff;
 }
 
@@ -92,22 +116,33 @@ body {
   grid-column: 1 / -1;
   padding: 48px;
   text-align: center;
-  border-radius: 16px;
-  background: var(--surface);
-  border: 1px dashed var(--hairline);
+  border-radius: var(--glass-radius);
+  background: var(--glass-fill-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px dashed var(--glass-border);
   color: var(--text-muted);
 }
 
 .table-bill-card {
-  background: var(--surface-raised);
-  border: 1px solid var(--hairline);
-  border-radius: 14px;
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--glass-radius);
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   cursor: pointer;
-  transition: transform 0.1s ease;
+  transition: all 0.2s ease;
+}
+
+.table-bill-card:hover {
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
 }
 
 .table-bill-card:active {
@@ -154,9 +189,12 @@ body {
 }
 
 .history-row {
-  background: var(--surface-raised);
-  border: 1px solid var(--hairline);
-  border-radius: 12px;
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--glass-radius);
   padding: 14px 16px;
   display: flex;
   align-items: center;
@@ -196,19 +234,25 @@ body {
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
-  background: var(--surface);
+  background: var(--glass-fill-light);
   color: var(--text-muted);
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--glass-border);
 }
 
 .small-btn.reprint {
-  background: var(--surface-raised);
+  background: var(--glass-fill-light);
   color: var(--text-main);
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--glass-border);
   padding: 6px 12px;
   border-radius: 8px;
   font-size: 12px;
   font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.small-btn.reprint:hover {
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
 }
 
 .date-picker-label {
@@ -221,12 +265,21 @@ body {
 }
 
 .date-input {
-  background: var(--surface);
+  background: var(--glass-fill-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: var(--text-main);
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--glass-border);
   border-radius: 8px;
   padding: 6px 10px;
   font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.date-input:focus {
+  outline: none;
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
 }
 
 /* ---------------- Bill detail modal ---------------- */
@@ -234,6 +287,8 @@ body {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -246,8 +301,11 @@ body {
   max-width: 440px;
   max-height: 88vh;
   overflow-y: auto;
-  background: var(--surface-raised);
-  border: 1px solid var(--hairline);
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
   border-radius: 16px;
   padding: 22px;
 }
@@ -270,7 +328,7 @@ body {
 .bill-ticket-group {
   margin-top: 16px;
   padding-top: 12px;
-  border-top: 1px dashed var(--hairline);
+  border-top: 1px dashed var(--glass-border);
 }
 
 .bill-ticket-header {
@@ -300,7 +358,7 @@ body {
   align-items: center;
   margin-top: 18px;
   padding-top: 14px;
-  border-top: 2px solid var(--hairline);
+  border-top: 2px solid var(--glass-border);
   font-weight: 700;
   font-size: 18px;
   color: var(--paper);
@@ -324,8 +382,10 @@ body {
   width: 100%;
   padding: 11px 13px;
   border-radius: 10px;
-  border: 1px solid var(--hairline);
-  background: var(--surface);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-fill-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: var(--text-main);
   font-size: 14px;
 }
@@ -334,8 +394,8 @@ body {
   width: 100%;
   padding: 10px;
   border-radius: 10px;
-  border: 1px dashed var(--hairline);
-  background: var(--surface);
+  border: 1px dashed var(--glass-border);
+  background: var(--glass-fill-light);
   color: var(--text-main);
   font-size: 13px;
 }
@@ -358,11 +418,14 @@ body {
   height: 64px;
   object-fit: cover;
   border-radius: 8px;
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--glass-border);
 }
 
 .small-btn.void {
-  background: var(--danger);
+  background: rgba(255, 71, 87, 0.75);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   color: #fff;
   padding: 6px 12px;
   border-radius: 8px;
@@ -371,9 +434,9 @@ body {
 }
 
 .small-btn.view-screenshot {
-  background: var(--surface-raised);
+  background: var(--glass-fill-light);
   color: var(--text-main);
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--glass-border);
   padding: 6px 12px;
   border-radius: 8px;
   font-size: 12px;
@@ -398,7 +461,9 @@ body {
   position: absolute;
   top: -14px;
   right: -14px;
-  background: var(--surface-raised);
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
 }
 
 .modal-error {
@@ -411,10 +476,19 @@ body {
 .primary-btn {
   padding: 10px 18px;
   border-radius: 10px;
-  background: var(--signal);
+  background: var(--accent-glass);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   color: #fff;
   font-weight: 700;
   font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.primary-btn:hover {
+  background: rgba(255, 90, 60, 0.9);
+  transform: translateY(-1px);
 }
 
 .pay-btn {
@@ -429,14 +503,16 @@ body {
   top: 76px;
   right: 24px;
   z-index: 70;
-  background: var(--surface-raised);
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--go);
   border-radius: 12px;
   padding: 12px 16px;
   font-size: 13px;
   font-weight: 500;
   color: var(--paper);
-  box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+  box-shadow: var(--glass-shadow);
 }
 
 .toast.error {
