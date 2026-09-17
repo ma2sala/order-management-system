@@ -4,14 +4,14 @@
   "description": "Waiter-to-barista order management system with real-time Socket.io updates, multi-role dashboards, and PostgreSQL database.",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js",
-    "build": "npx prisma generate && npx prisma migrate deploy",
-    "dev": "nodemon src/server.js",
-    "seed": "node src/seed.js",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:generate": "prisma generate",
-    "prisma:studio": "prisma studio"
-  },
+  "start": "npx prisma migrate deploy && node src/server.js",
+  "build": "npx prisma generate",
+  "dev": "nodemon src/server.js",
+  "seed": "node src/seed.js",
+  "prisma:migrate": "prisma migrate dev",
+  "prisma:generate": "prisma generate",
+  "prisma:studio": "prisma studio"
+},
   "dependencies": {
     "@prisma/client": "^5.19.0",
     "bcrypt": "^5.1.1",
