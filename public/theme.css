@@ -22,7 +22,6 @@
   --font-body: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* ---- iOS Liquid Glass tokens ---- */
   --glass-fill: rgba(18, 24, 38, 0.55);
   --glass-fill-light: rgba(255, 255, 255, 0.08);
   --glass-fill-hover: rgba(255, 255, 255, 0.18);
@@ -33,6 +32,10 @@
   --glass-blur-sm: blur(12px) saturate(180%);
   --glass-radius: 14px;
   --accent-glass: rgba(255, 90, 60, 0.75);
+
+  --icon-color: rgba(255, 255, 255, 0.85);
+  --icon-color-hover: #ffffff;
+  --icon-size: 20px;
 }
 
 * {
@@ -54,8 +57,6 @@ html, body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* A translucent dark scrim over the photo everywhere, so glass panels
-   still read clearly against busy parts of the background image. */
 body::before {
   content: '';
   position: fixed;
@@ -110,6 +111,31 @@ input {
 @keyframes toastIn {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Header icon buttons — shared across every dashboard ----
+   Icons are inline SVGs using stroke="currentColor" on their paths, so
+   controlling color here is enough to theme every icon consistently;
+   .icon-btn's own background/border/blur (glass look) is still set
+   per-page since button sizes differ slightly between dashboards. */
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--icon-color);
+  transition: color 0.2s ease, filter 0.2s ease, background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.icon-btn:hover {
+  color: var(--icon-color-hover);
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.45));
+}
+
+.icon-btn svg {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  display: block;
+  flex-shrink: 0;
 }
 
 /* ---- Shared login screen (Liquid Glass) ---- */

@@ -24,6 +24,8 @@
   const pendingCountEl = document.getElementById('pendingCount');
   const progressCountEl = document.getElementById('progressCount');
   const muteBtn = document.getElementById('muteBtn');
+  const muteIconOn = document.getElementById('muteIconOn');
+  const muteIconOff = document.getElementById('muteIconOff');
   const completedDateInput = document.getElementById('completedDateInput');
   const historyBtn = document.getElementById('historyBtn');
   const logoutBtn = document.getElementById('logoutBtn');
@@ -110,7 +112,8 @@
 
   muteBtn.addEventListener('click', () => {
     muted = !muted;
-    muteBtn.textContent = muted ? '🔇' : '🔊';
+    muteIconOn.classList.toggle('hidden', muted);
+    muteIconOff.classList.toggle('hidden', !muted);
   });
 
   // ---------------- Socket ----------------
