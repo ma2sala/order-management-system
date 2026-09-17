@@ -48,31 +48,57 @@ async function createUser(req, res) {
   }
 }
 
-// PATCH /api/users/:id — manager only, toggle active/inactive
-// Deactivating an account is how you "remove" a waiter/barista without
-// deleting their historical orders or audit trail.
-async function setUserActive(req, res) {
+// PATCH /api/users/:id — manager only
+// Handles both the full Edit-modal save (name/email/isActive) and the
+// quick Activate/Deactivate toggle (isActive only) — every field here is
+// optional, only what's present in the body gets updated.
+async function updateUser(req, res) {
   const { id } = req.params;
-  const { isActive } = req.body;
+  const { name, email, isActive } = req.body;
 
-  if (typeof isActive !== 'boolean') {
-    return res.status(400).json({ error: 'isActive (boolean) is required' });
+  const data = {};
+
+  if (name !== undefined) {
+    if (!String(name).trim()) {
+      return res.status(400).json({ error: 'name cannot be empty' });
+    }
+    data.name = name.trim();
   }
-  if (id === req.user.id && isActive === false) {
-    return res.status(400).json({ error: 'You cannot deactivate your own account' });
+
+  if (email !== undefined) {
+    if (!String(email).trim()) {
+      return res.status(400).json({ error: 'email cannot be empty' });
+    }
+    data.email = email.trim();
+  }
+
+  if (isActive !== undefined) {
+    if (typeof isActive !== 'boolean') {
+      return res.status(400).json({ error: 'isActive must be a boolean' });
+    }
+    if (id === req.user.id && isActive === false) {
+      return res.status(400).json({ error: 'You cannot deactivate your own account' });
+    }
+    data.isActive = isActive;
+  }
+
+  if (Object.keys(data).length === 0) {
+    return res.status(400).json({ error: 'No valid fields to update' });
   }
 
   try {
     const user = await prisma.user.update({
       where: { id },
-      data: { isActive },
+      data,
       select: { id: true, name: true, email: true, role: true, isActive: true, createdAt: true },
     });
     res.json(user);
   } catch (err) {
-    console.error('setUserActive error:', err);
+    if (err.code === 'P2025') return res.status(404).json({ error: 'User not found' });
+    if (err.code === 'P2002') return res.status(409).json({ error: 'A user with this email already exists' });
+    console.error('updateUser error:', err);
     res.status(500).json({ error: 'Failed to update user' });
   }
 }
 
-module.exports = { listUsers, createUser, setUserActive };
+module.exports = { listUsers, createUser, updateUser };
