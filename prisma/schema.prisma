@@ -1,0 +1,283 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  MANAGER
+  WAITER
+  BARISTA
+  CHEF
+  CASHIER
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  MOBILE_MONEY
+  TELEBIRR
+  CBE
+  BOA
+}
+
+enum OrderStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  VOIDED // only reachable via a manager-authorized void
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+}
+
+enum DrinkTemperature {
+  HOT
+  COLD
+  NORMAL
+  NORMAL_WITH_ICE
+}
+
+enum AuditAction {
+  ORDER_CREATED
+  ORDER_EDIT_ATTEMPT
+  ORDER_VOID_ATTEMPT
+  ORDER_DELETE_ATTEMPT
+  ORDER_STATUS_CHANGE
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  ordersCreated Order[]          @relation("WaiterOrders")
+  statusChanges OrderStatusLog[] @relation("ChangedBy")
+  voidedOrders  Order[]          @relation("VoidedByManager")
+  paymentsHandled Order[]        @relation("CashierPayments")
+  auditLogs     AuditLog[]
+
+  @@index([role])
+}
+
+model RestaurantTable {
+  id     String      @id @default(uuid())
+  label  String      @unique // e.g. "T1", "Patio-3"
+  status TableStatus @default(AVAILABLE)
+  orders Order[]
+
+  @@map("tables")
+}
+
+model Category {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  menuItems MenuItem[]
+
+  // Optional one-level nesting — e.g. "Drinks" is the parent of "Hot Drinks",
+  // "Juices & Smoothies", "Soft Drinks", "Alcohol". A category with no
+  // parent and no children (like Snacks, Meals) behaves as a normal flat tab.
+  parentId String?
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+}
+
+model MenuItem {
+  id          String      @id @default(uuid())
+  name        String      @unique
+  price       Decimal     @db.Decimal(10, 2)
+  imageUrl    String?
+  isAvailable Boolean     @default(true)
+  // Manager-controlled "regular/frequently sold" flag — powers the
+  // Waiter screen's flat "Top Items" shortcut so staff don't have to
+  // drill through categories for the things sold every single day.
+  isFeatured  Boolean     @default(false)
+  categoryId  String
+  category    Category    @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[]
+
+  // Customization options this item allows on the waiter's ordering screen.
+  hasTemperatureOption Boolean  @default(false) // e.g. drinks: does this item offer a serving-temperature choice at all
+  // Which specific temperature choices this item offers, e.g. coffee drinks
+  // use [HOT, COLD, NORMAL]; bar drinks (wine, spirits, beer) use
+  // [COLD, NORMAL, NORMAL_WITH_ICE] since "hot" doesn't apply to them.
+  // Left empty on older/legacy rows -> the app falls back to [HOT, COLD, NORMAL].
+  temperatureOptions DrinkTemperature[] @default([])
+  customizableIngredients String[] @default([]) // e.g. ["onions", "pickles", "cheese"] — waiter can remove any of these
+  extraOptions Json? // e.g. [{"name":"Extra Shot","price":0.5},{"name":"Whipped Cream","price":0.75}]
+
+  // Which stock items this menu item draws down when sold, and how much of
+  // each — see MenuItemStock. A menu item can be linked to zero, one, or
+  // several stock items (e.g. a cocktail drawing from both a spirit bottle
+  // and a mixer); a single stock item (e.g. "Coffee Beans (kg)") can in turn
+  // be linked to many menu items.
+  stockLinks MenuItemStock[]
+
+  @@index([categoryId])
+}
+
+// A trackable stock/inventory item — a bottle count, a bag of coffee
+// beans, a case of soft drinks, etc. Not every stock item has to be tied
+// to a menu item (you can track things purely for your own restocking
+// awareness), but linking it via MenuItemStock is what lets a sale
+// automatically decrement it.
+model StockItem {
+  id       String @id @default(uuid())
+  name     String @unique
+  category String // free-text grouping shown in the dashboard: "Drinks" | "Food" | "Other"
+
+  quantity  Decimal  @db.Decimal(10, 2) @default(0) // current amount on hand
+  unit      String? // e.g. "bottles", "kg", "crates", "pcs"
+  threshold Decimal? @db.Decimal(10, 2) // manager gets a "Low Stock" flag at or below this amount
+
+  links MenuItemStock[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Recipe/consumption link: selling one unit of `menuItem` draws down
+// `qtyPerSale` units of `stockItem`. A stock item can be linked to many
+// menu items (a shared ingredient like coffee beans), and a menu item can
+// be linked to several stock items (e.g. a cocktail using both a spirit
+// and a mixer).
+model MenuItemStock {
+  id String @id @default(uuid())
+
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  stockItemId String
+  stockItem   StockItem @relation(fields: [stockItemId], references: [id], onDelete: Cascade)
+
+  qtyPerSale Decimal @db.Decimal(10, 2) @default(1) // how much stock one sale of this menu item consumes
+
+  @@unique([menuItemId, stockItemId])
+  @@index([menuItemId])
+  @@index([stockItemId])
+}
+
+model Order {
+  id      String          @id @default(uuid())
+  tableId String
+  table   RestaurantTable @relation(fields: [tableId], references: [id])
+
+  waiterId String
+  waiter   User   @relation("WaiterOrders", fields: [waiterId], references: [id])
+
+  status OrderStatus @default(PENDING)
+
+  // Void/cancel requires manager sign-off — never hard-deleted, only flagged.
+  isVoided   Boolean   @default(false)
+  voidedById String?
+  voidedBy   User?     @relation("VoidedByManager", fields: [voidedById], references: [id])
+  voidReason String?
+  voidedAt   DateTime?
+
+  // Cashier payment tracking — a table's visit is usually several separate
+  // Order tickets (drinks first, food later, a reorder, etc.), each paid
+  // independently here rather than through a separate combined-bill entity.
+  // The Cashier Dashboard groups a table's unpaid COMPLETED orders together
+  // client-side into one bill and pays them in a single batch.
+  isPaid        Boolean        @default(false)
+  paidAt        DateTime?
+  paymentMethod PaymentMethod?
+  cashierId     String?
+  cashier       User?          @relation("CashierPayments", fields: [cashierId], references: [id])
+  // Path to an uploaded screenshot proving a mobile-money/bank-transfer
+  // payment went through (e.g. a Telebirr confirmation screen the customer
+  // showed the cashier). Optional — cash/card payments won't have one.
+  paymentScreenshotUrl String?
+
+  items      OrderItem[]
+  statusLogs OrderStatusLog[]
+  auditLogs  AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([tableId])
+  @@index([waiterId])
+  @@index([isPaid])
+}
+
+model OrderItem {
+  id      String @id @default(uuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+
+  quantity  Int     @default(1)
+  notes     String? // free-text note, e.g. "customer allergic to nuts"
+  unitPrice Decimal @db.Decimal(10, 2) // base menu price snapshot at order time
+
+  // Customization actually chosen for this line — only meaningful when the
+  // linked MenuItem allows it (see MenuItem.hasTemperatureOption etc).
+  temperature        DrinkTemperature?
+  removedIngredients String[]          @default([]) // subset of menuItem.customizableIngredients
+  selectedExtras     Json? // snapshot of chosen extras + their price at order time, e.g. [{"name":"Extra Shot","price":0.5}]
+
+  @@index([orderId])
+}
+
+// Every status transition, who made it, and when — immutable audit trail.
+model OrderStatusLog {
+  id      String @id @default(uuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  fromStatus OrderStatus?
+  toStatus   OrderStatus
+
+  changedById String
+  changedBy   User   @relation("ChangedBy", fields: [changedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+}
+
+// Append-only fraud/audit log. Nothing here is ever updated or deleted
+// by the application — that is what makes it usable as evidence.
+model AuditLog {
+  id     String      @id @default(uuid())
+  action AuditAction
+
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id])
+
+  actorId String?
+  actor   User?   @relation(fields: [actorId], references: [id])
+
+  tableId     String?
+  totalAmount Decimal? @db.Decimal(10, 2)
+
+  // One-way hash of the bearer token used, for correlation only —
+  // the raw JWT is never persisted (see src/middleware/auditLogger.js).
+  authTokenHash String?
+
+  success   Boolean @default(true)
+  ipAddress String?
+  userAgent String?
+  metadata  Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([action])
+  @@index([orderId])
+  @@index([actorId])
+  @@index([createdAt])
+}

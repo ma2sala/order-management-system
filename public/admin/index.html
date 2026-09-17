@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Manager Dashboard</title>
+<link rel="stylesheet" href="/theme.css" />
+<link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+
+  <!-- ================= LOGIN ================= -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <h1>MANAGER DASHBOARD</h1>
+      <p class="subtitle">Manager sign in</p>
+
+      <form id="loginForm">
+        <label for="email">Email</label>
+        <input type="email" id="email" autocomplete="username" required />
+
+        <label for="password">Password</label>
+        <input type="password" id="password" autocomplete="current-password" required />
+
+        <button type="submit" class="login-submit">Sign In</button>
+        <p class="login-error" id="loginError"></p>
+      </form>
+
+      <div class="login-hint">
+        Demo login — <strong>manager@demo.com</strong> / <strong>password123</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MAIN APP ================= -->
+  <div id="appScreen" class="hidden">
+
+    <header class="app-header">
+      <div class="header-top-row">
+        <div class="header-left">
+          <span class="icon">📊</span>
+          <h1 class="display-heading app-title">MANAGER DASHBOARD</h1>
+        </div>
+        <button id="hamburgerBtn" class="icon-btn hamburger-btn" aria-label="Open menu" aria-expanded="false" title="Menu">☰</button>
+      </div>
+      <div class="header-right">
+        <label class="date-picker-label">
+          Date
+          <input type="date" id="dateInput" class="date-input" />
+        </label>
+        <button id="refreshBtn" class="icon-btn" title="Refresh">🔄</button>
+        <button id="logoutBtn" class="icon-btn" aria-label="Log out" title="Log out">🚪</button>
+      </div>
+    </header>
+
+    <!-- Mobile-only nav dropdown — mirrors the desktop tab row below, but
+         shown/hidden via the hamburger button instead of always visible.
+         See .hamburger-btn / .mobile-nav-dropdown in admin.css. -->
+    <nav id="mobileNavDropdown" class="mobile-nav-dropdown hidden">
+      <button class="mobile-nav-item active" data-view="overview">Overview</button>
+      <button class="mobile-nav-item" data-view="orders">Orders</button>
+      <button class="mobile-nav-item" data-view="staff">Staff</button>
+      <button class="mobile-nav-item" data-view="stock">📦 Stock</button>
+      <button class="mobile-nav-item" data-view="menu">🍽️ Menu</button>
+    </nav>
+
+    <div class="view-toggle">
+      <button class="toggle-btn active" data-view="overview">Overview</button>
+      <button class="toggle-btn" data-view="orders">Orders</button>
+      <button class="toggle-btn" data-view="staff">Staff</button>
+      <button class="toggle-btn" data-view="stock">📦 Stock</button>
+      <button class="toggle-btn" data-view="menu">🍽️ Menu</button>
+    </div>
+
+    <!-- ---------------- OVERVIEW ---------------- -->
+    <section id="overviewView" class="view-section">
+      <div class="stat-grid" id="statGrid"></div>
+
+      <div class="panel">
+        <div class="panel-header-row">
+          <h2 class="panel-title">Items Ordered — <span id="itemsPeriodLabel">Today</span></h2>
+          <div class="panel-header-controls">
+            <div class="category-filter-row" id="itemsPeriodFilter">
+              <button class="cat-filter-btn active" data-period="daily">Daily</button>
+              <button class="cat-filter-btn" data-period="weekly">Weekly</button>
+              <button class="cat-filter-btn" data-period="monthly">Monthly</button>
+            </div>
+            <button id="topSellersBtn" class="cat-filter-btn top-sellers-btn">🏆 Top Sellers</button>
+            <div class="category-filter-row" id="itemsCategoryFilter">
+              <button class="cat-filter-btn active" data-cat="all">All</button>
+              <button class="cat-filter-btn" data-cat="drinks">🥤 Drinks</button>
+              <button class="cat-filter-btn" data-cat="food">🍽 Food</button>
+            </div>
+          </div>
+        </div>
+        <div id="itemsTable" class="data-table"></div>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">⚠️ Flagged Attempts (blocked void/delete/edit)</h2>
+        <div id="flaggedTable" class="data-table"></div>
+      </div>
+    </section>
+
+    <!-- ---------------- ORDERS ---------------- -->
+    <section id="ordersView" class="view-section hidden">
+      <div class="panel">
+        <div class="panel-header-row">
+          <h2 class="panel-title">All Orders</h2>
+          <div class="category-filter-row" id="ordersCategoryFilter">
+            <button class="cat-filter-btn active" data-cat="all">All</button>
+            <button class="cat-filter-btn" data-cat="drinks">🥤 Drinks</button>
+            <button class="cat-filter-btn" data-cat="food">🍽 Food</button>
+          </div>
+        </div>
+        <div id="ordersTable" class="data-table"></div>
+      </div>
+    </section>
+
+    <!-- ---------------- STAFF ---------------- -->
+    <section id="staffView" class="view-section hidden">
+      <div class="panel">
+        <div class="panel-header-row">
+          <h2 class="panel-title">Staff Accounts</h2>
+          <button id="addStaffBtn" class="primary-btn">＋ Add Staff</button>
+        </div>
+        <div id="staffTable" class="data-table"></div>
+      </div>
+    </section>
+
+    <!-- ---------------- STOCK ---------------- -->
+    <section id="stockView" class="view-section hidden">
+      <div class="panel">
+        <div class="panel-header-row">
+          <h2 class="panel-title">📦 Stock</h2>
+          <button id="addStockBtn" class="primary-btn">＋ Add Stock Item</button>
+        </div>
+        <p class="field-hint" style="margin-top:0;">Updates automatically when linked items are sold — no refresh needed.</p>
+        <div id="stockTable" class="data-table"></div>
+      </div>
+    </section>
+
+    <!-- ---------------- MENU ---------------- -->
+    <section id="menuMgmtView" class="view-section hidden">
+      <div class="panel">
+        <div class="panel-header-row">
+          <h2 class="panel-title">🍽️ Menu</h2>
+          <input type="search" id="menuSearchInput" class="menu-search-input" placeholder="Search items or categories…" aria-label="Search menu items" />
+          <div class="category-filter-row" id="menuCategoryFilter">
+            <button class="cat-filter-btn active" data-cat="all">All</button>
+            <button class="cat-filter-btn" data-cat="drinks">🥤 Drinks</button>
+            <button class="cat-filter-btn" data-cat="food">🍽 Food</button>
+          </div>
+          <button id="menuTopSellersBtn" class="cat-filter-btn top-sellers-btn">🏆 Top Sellers</button>
+          <button id="addMenuItemBtn" class="primary-btn">＋ Add Menu Item</button>
+        </div>
+        <p class="field-hint" style="margin-top:0;">Prices and availability changes apply to new orders right away.</p>
+        <div id="menuItemsTable" class="data-table"></div>
+      </div>
+    </section>
+
+    <div id="toast" class="toast hidden"></div>
+  </div>
+
+  <!-- ---------------- Add Staff modal ---------------- -->
+  <div id="staffModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h2 class="modal-title">Add Staff Account</h2>
+      <form id="staffForm">
+        <label for="staffName">Name</label>
+        <input type="text" id="staffName" required />
+
+        <label for="staffEmail">Email</label>
+        <input type="email" id="staffEmail" required />
+
+        <label for="staffPassword">Password</label>
+        <input type="password" id="staffPassword" minlength="8" required />
+        <p class="field-hint">At least 8 characters</p>
+
+        <label for="staffRole">Role</label>
+        <select id="staffRole" required>
+          <option value="WAITER">Waiter</option>
+          <option value="BARISTA">Barista</option>
+          <option value="CHEF">Chef</option>
+          <option value="CASHIER">Cashier</option>
+          <option value="MANAGER">Manager</option>
+        </select>
+
+        <p class="modal-error" id="staffError"></p>
+
+        <div class="modal-actions">
+          <button type="button" id="staffCancelBtn" class="secondary-btn">Cancel</button>
+          <button type="submit" class="primary-btn">Create Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ---------------- Edit Staff modal (name/email only) ---------------- -->
+  <div id="editStaffModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h2 class="modal-title">Edit Staff Account</h2>
+      <form id="editStaffForm">
+        <label for="editStaffName">Name</label>
+        <input type="text" id="editStaffName" required />
+
+        <label for="editStaffEmail">Email</label>
+        <input type="email" id="editStaffEmail" required />
+
+        <p class="modal-error" id="editStaffError"></p>
+
+        <div class="modal-actions">
+          <button type="button" id="editStaffCancelBtn" class="secondary-btn">Cancel</button>
+          <button type="submit" class="primary-btn">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ---------------- Void order modal ---------------- -->
+  <div id="voidModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h2 class="modal-title">Void Order</h2>
+      <p class="modal-sub">This cannot be undone. The order stays on record as voided.</p>
+      <form id="voidForm">
+        <label for="voidReason">Reason</label>
+        <input type="text" id="voidReason" placeholder="e.g. duplicate entry, customer walked out" required />
+        <p class="modal-error" id="voidError"></p>
+        <div class="modal-actions">
+          <button type="button" id="voidCancelBtn" class="secondary-btn">Back</button>
+          <button type="submit" class="danger-btn">Void Order</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ---------------- Order details modal ---------------- -->
+  <div id="detailsModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="details-header-row">
+        <h2 class="modal-title">Order Details</h2>
+        <button type="button" id="detailsCloseBtn" class="icon-btn" aria-label="Close">✕</button>
+      </div>
+      <div id="detailsBody"></div>
+    </div>
+  </div>
+
+  <!-- ---------------- Add/Edit stock item modal ---------------- -->
+  <div id="stockItemModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h2 class="modal-title" id="stockItemModalTitle">Add Stock Item</h2>
+      <form id="stockItemForm">
+        <label for="stockItemName">Item name</label>
+        <input type="text" id="stockItemName" required />
+
+        <label for="stockItemCategory">Category</label>
+        <select id="stockItemCategory">
+          <option value="Drinks">Drinks</option>
+          <option value="Food">Food</option>
+          <option value="Other">Other</option>
+        </select>
+
+        <label for="stockItemQuantity">Quantity on hand</label>
+        <input type="number" id="stockItemQuantity" step="0.01" min="0" required />
+
+        <label for="stockItemUnit">Unit</label>
+        <input type="text" id="stockItemUnit" placeholder="e.g. bottles, kg, pcs, crates" />
+
+        <label for="stockItemThreshold">Low stock alert below</label>
+        <input type="number" id="stockItemThreshold" step="0.01" min="0" placeholder="optional — e.g. 5" />
+
+        <p class="modal-error" id="stockItemError"></p>
+
+        <div class="modal-actions">
+          <button type="button" id="stockItemCancelBtn" class="secondary-btn">Cancel</button>
+          <button type="submit" class="primary-btn" id="stockItemSubmitBtn">Add Item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ---------------- Link menu item to stock modal ---------------- -->
+  <div id="linkMenuItemModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h2 class="modal-title">Link Menu Item</h2>
+      <p class="modal-sub">Selling this menu item will draw down this stock item automatically.</p>
+      <form id="linkItemForm">
+        <label for="linkMenuItemSelect">Menu item</label>
+        <select id="linkMenuItemSelect" required></select>
+
+        <label for="linkQtyPerSale">Quantity used per sale</label>
+        <input type="number" id="linkQtyPerSale" step="0.01" min="0.01" value="1" required />
+        <p class="field-hint">e.g. 1 bottle per drink, or 0.02 kg of beans per coffee</p>
+
+        <p class="modal-error" id="linkItemError"></p>
+
+        <div class="modal-actions">
+          <button type="button" id="linkItemCancelBtn" class="secondary-btn">Cancel</button>
+          <button type="submit" class="primary-btn">Link</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ---------------- Add/Edit menu item modal ---------------- -->
+  <div id="menuItemModal" class="modal-overlay hidden">
+    <div class="modal-card modal-card-wide">
+      <h2 class="modal-title" id="menuItemModalTitle">Add Menu Item</h2>
+      <form id="menuItemForm">
+        <label for="menuItemName">Item name</label>
+        <input type="text" id="menuItemName" required />
+
+        <label for="menuItemCategory">Category</label>
+        <select id="menuItemCategory" required></select>
+
+        <label for="menuItemPrice">Price</label>
+        <input type="number" id="menuItemPrice" step="0.01" min="0" required />
+
+        <label for="menuItemImageUrl">Picture (paste an image link)</label>
+        <input type="url" id="menuItemImageUrl" placeholder="https://example.com/photo.jpg" />
+        <img id="menuItemImagePreview" src="" alt="" style="max-width:120px;max-height:120px;margin-top:8px;border-radius:8px;display:none;object-fit:cover;" />
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="menuItemAvailable" checked />
+          Available on the menu right now
+        </label>
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="menuItemFeatured" />
+          ⭐ Top Item — show in the waiters' quick-access shortcut
+        </label>
+
+        <div class="modal-divider"></div>
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="menuItemHasTemp" />
+          Offers a temperature choice
+        </label>
+        <div id="menuItemTempOptions" class="option-row" style="margin:8px 0 0;">
+          <label class="checkbox-label inline"><input type="checkbox" value="HOT" class="temp-opt" /> Hot</label>
+          <label class="checkbox-label inline"><input type="checkbox" value="COLD" class="temp-opt" /> Cold</label>
+          <label class="checkbox-label inline"><input type="checkbox" value="NORMAL" class="temp-opt" /> Normal</label>
+          <label class="checkbox-label inline"><input type="checkbox" value="NORMAL_WITH_ICE" class="temp-opt" /> Normal + Ice</label>
+        </div>
+
+        <label for="menuItemIngredients">Removable ingredients (comma separated)</label>
+        <input type="text" id="menuItemIngredients" placeholder="e.g. onions, pickles, cheese" />
+
+        <label>Extras</label>
+        <div id="menuItemExtrasList" class="extras-list"></div>
+        <button type="button" id="addExtraRowBtn" class="secondary-btn" style="margin-top:8px;">＋ Add Extra</button>
+
+        <p class="modal-error" id="menuItemError"></p>
+
+        <div class="modal-actions">
+          <button type="button" id="menuItemCancelBtn" class="secondary-btn">Cancel</button>
+          <button type="submit" class="primary-btn" id="menuItemSubmitBtn">Add Item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

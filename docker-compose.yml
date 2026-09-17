@@ -1,0 +1,21 @@
+# Spins up a local Postgres instance so you can run this project without
+# installing Postgres directly on your machine.
+#
+#   docker compose up -d
+#
+version: "3.8"
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: kds_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

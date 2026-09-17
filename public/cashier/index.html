@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cashier Dashboard</title>
+<link rel="stylesheet" href="/theme.css" />
+<link rel="stylesheet" href="cashier.css" />
+</head>
+<body>
+
+  <!-- ================= LOGIN ================= -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <h1>CASHIER</h1>
+      <p class="subtitle">Cashier / Manager sign in</p>
+
+      <form id="loginForm">
+        <label for="email">Email</label>
+        <input type="email" id="email" autocomplete="username" required />
+
+        <label for="password">Password</label>
+        <input type="password" id="password" autocomplete="current-password" required />
+
+        <button type="submit" class="login-submit">Sign In</button>
+        <p class="login-error" id="loginError"></p>
+      </form>
+
+      <div class="login-hint">
+        No cashier account yet? Create one from the Manager Dashboard's Staff tab (role: Cashier).
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MAIN APP ================= -->
+  <div id="appScreen" class="hidden">
+
+    <header class="app-header">
+      <div class="header-left">
+        <span class="icon">💵</span>
+        <div>
+          <h1 class="display-heading app-title">CASHIER</h1>
+          <p class="app-subtitle" id="dateDisplay"></p>
+        </div>
+      </div>
+      <div class="header-right">
+        <button id="refreshBtn" class="icon-btn" title="Refresh">🔄</button>
+        <button id="logoutBtn" class="icon-btn" aria-label="Log out" title="Log out">🚪</button>
+      </div>
+    </header>
+
+    <div class="view-toggle">
+      <button class="toggle-btn active" data-view="bills">Open Bills</button>
+      <button class="toggle-btn" data-view="history">Payment History</button>
+    </div>
+
+    <!-- ---------------- OPEN BILLS ---------------- -->
+    <section id="billsView" class="view-section">
+      <div id="tablesGrid" class="tables-grid"></div>
+    </section>
+
+    <!-- ---------------- PAYMENT HISTORY ---------------- -->
+    <section id="historyView" class="view-section hidden">
+      <label class="date-picker-label">
+        Day
+        <input type="date" id="historyDateInput" class="date-input" />
+      </label>
+      <div id="historyList" class="history-list"></div>
+    </section>
+
+  </div>
+
+  <!-- ---------------- Bill detail modal ---------------- -->
+  <div id="billModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header-row">
+        <h2 class="modal-title" id="billModalTitle">Table Bill</h2>
+        <button type="button" id="billCloseBtn" class="icon-btn" aria-label="Close">✕</button>
+      </div>
+      <div id="billBody"></div>
+
+      <div class="pay-controls">
+        <label for="paymentMethodSelect">Payment method</label>
+        <select id="paymentMethodSelect">
+          <option value="CASH">💵 Cash</option>
+          <option value="CARD">💳 Card</option>
+          <option value="TELEBIRR">📱 Telebirr</option>
+          <option value="CBE">🏦 CBE (Commercial Bank of Ethiopia)</option>
+          <option value="BOA">🏦 BOA (Bank of Abyssinia)</option>
+          <option value="MOBILE_MONEY">📱 Other Mobile Money</option>
+        </select>
+
+        <label for="paymentScreenshotInput">Payment screenshot (optional)</label>
+        <input type="file" id="paymentScreenshotInput" accept="image/*" />
+        <p class="field-hint">For Telebirr/CBE/BOA — attach the customer's transaction confirmation as proof.</p>
+        <div id="screenshotPreviewWrap" class="screenshot-preview-wrap hidden">
+          <img id="screenshotPreview" class="screenshot-preview" alt="Payment screenshot preview" />
+          <button type="button" id="removeScreenshotBtn" class="small-btn void">Remove</button>
+        </div>
+
+        <p class="modal-error" id="payError"></p>
+
+        <button type="button" id="markPaidBtn" class="primary-btn pay-btn">Mark Paid & Print Receipt</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------------- Screenshot lightbox (view a past payment's proof) ---------------- -->
+  <div id="screenshotLightbox" class="modal-overlay hidden">
+    <div class="lightbox-card">
+      <button type="button" id="lightboxCloseBtn" class="icon-btn lightbox-close" aria-label="Close">✕</button>
+      <img id="lightboxImage" alt="Payment screenshot" />
+    </div>
+  </div>
+
+  <!-- ---------------- Printable receipt (hidden on screen, shown only when printing) ---------------- -->
+  <div id="receiptPrintArea" class="receipt-print-area"></div>
+
+<script src="cashier.js"></script>
+</body>
+</html>

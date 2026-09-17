@@ -1,0 +1,489 @@
+body {
+  padding-bottom: 40px;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 24px;
+  background: var(--ink);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon {
+  font-size: 24px;
+}
+
+.app-title {
+  font-size: 26px;
+  margin: 0;
+  color: var(--paper);
+}
+
+.app-subtitle {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.icon-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  font-size: 18px;
+}
+
+.icon-btn:active {
+  transform: scale(0.95);
+}
+
+.view-toggle {
+  display: flex;
+  gap: 8px;
+  padding: 16px 24px 0;
+}
+
+.toggle-btn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.toggle-btn.active {
+  background: var(--signal);
+  color: #fff;
+}
+
+.view-section {
+  padding: 20px 24px;
+}
+
+/* ---------------- Open Bills — table cards ---------------- */
+.tables-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  padding: 48px;
+  text-align: center;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px dashed var(--hairline);
+  color: var(--text-muted);
+}
+
+.table-bill-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.table-bill-card:active {
+  transform: scale(0.97);
+}
+
+.table-bill-card .table-label {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--paper);
+}
+
+.table-bill-card .ticket-count {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.table-bill-card .bill-total {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--go);
+}
+
+.table-bill-card .view-bill-hint {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--signal);
+}
+
+/* ---------------- Payment history ---------------- */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 40px 0;
+  font-size: 14px;
+}
+
+.history-row {
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.history-row .info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.history-row .ticket-line {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--paper);
+  font-size: 14px;
+}
+
+.history-row .meta-line {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.history-row .amount {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--go);
+}
+
+.method-tag {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--surface);
+  color: var(--text-muted);
+  border: 1px solid var(--hairline);
+}
+
+.small-btn.reprint {
+  background: var(--surface-raised);
+  color: var(--text-main);
+  border: 1px solid var(--hairline);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.date-picker-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.date-input {
+  background: var(--surface);
+  color: var(--text-main);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+}
+
+/* ---------------- Bill detail modal ---------------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+  padding: 20px;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 440px;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
+  padding: 22px;
+}
+
+.modal-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  letter-spacing: 0.03em;
+  color: var(--paper);
+  margin: 0;
+}
+
+.bill-ticket-group {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--hairline);
+}
+
+.bill-ticket-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.bill-item-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: var(--text-main);
+  padding: 4px 0;
+}
+
+.bill-item-custom {
+  font-size: 11px;
+  color: var(--wait);
+}
+
+.bill-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 2px solid var(--hairline);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--paper);
+}
+
+.pay-controls {
+  margin-top: 18px;
+}
+
+.pay-controls label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+.pay-controls select {
+  width: 100%;
+  padding: 11px 13px;
+  border-radius: 10px;
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  color: var(--text-main);
+  font-size: 14px;
+}
+
+.pay-controls input[type="file"] {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px dashed var(--hairline);
+  background: var(--surface);
+  color: var(--text-main);
+  font-size: 13px;
+}
+
+.field-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 4px 0 0;
+}
+
+.screenshot-preview-wrap {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.screenshot-preview {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--hairline);
+}
+
+.small-btn.void {
+  background: var(--danger);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.small-btn.view-screenshot {
+  background: var(--surface-raised);
+  color: var(--text-main);
+  border: 1px solid var(--hairline);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ---------------- Screenshot lightbox ---------------- */
+.lightbox-card {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+.lightbox-card img {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 8px;
+  display: block;
+}
+
+.lightbox-close {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  background: var(--surface-raised);
+}
+
+.modal-error {
+  color: var(--danger);
+  font-size: 13px;
+  min-height: 16px;
+  margin-top: 10px;
+}
+
+.primary-btn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: var(--signal);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.pay-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 15px;
+  margin-top: 12px;
+}
+
+.toast {
+  position: fixed;
+  top: 76px;
+  right: 24px;
+  z-index: 70;
+  background: var(--surface-raised);
+  border: 1px solid var(--go);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--paper);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+}
+
+.toast.error {
+  border-color: var(--danger);
+}
+
+/* ---------------- Printable receipt ---------------- */
+.receipt-print-area {
+  display: none;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #receiptPrintArea,
+  #receiptPrintArea * {
+    visibility: visible;
+  }
+  #receiptPrintArea {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 280px;
+    padding: 10px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #000;
+  }
+  .receipt-center {
+    text-align: center;
+  }
+  .receipt-divider {
+    border-top: 1px dashed #000;
+    margin: 6px 0;
+  }
+  .receipt-line {
+    display: flex;
+    justify-content: space-between;
+  }
+  .receipt-total {
+    font-weight: bold;
+    font-size: 14px;
+  }
+  .receipt-order-header {
+    font-weight: bold;
+    margin-top: 4px;
+  }
+}

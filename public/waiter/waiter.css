@@ -1,0 +1,1032 @@
+body {
+  padding-bottom: 40px;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--ink);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.app-title {
+  font-size: 26px;
+  margin: 0;
+  color: var(--paper);
+}
+
+.app-subtitle {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.icon-btn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--surface-raised);
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn:active {
+  transform: scale(0.95);
+}
+
+.badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--signal);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notif-panel {
+  position: absolute;
+  right: 16px;
+  top: 64px;
+  width: 280px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 8px;
+  z-index: 40;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+}
+
+.notif-item {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 6px;
+}
+
+.notif-item p.text {
+  margin: 0;
+  font-size: 13px;
+  color: var(--paper);
+}
+
+.notif-item p.time {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.notif-empty {
+  padding: 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.view-toggle {
+  display: flex;
+  gap: 8px;
+  padding: 14px 16px 0;
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 11px;
+  border-radius: 10px;
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.toggle-btn.active {
+  background: var(--signal);
+  color: #fff;
+}
+
+.section-block {
+  padding: 16px 16px 0;
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+
+.chip-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.chip {
+  flex-shrink: 0;
+  min-width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  color: var(--paper);
+  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: 16px;
+}
+
+.chip.selected {
+  background: var(--signal);
+  border-color: var(--signal);
+  color: #fff;
+}
+
+.chip:active {
+  transform: scale(0.95);
+}
+
+.category-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 16px 16px 8px;
+  overflow-x: auto;
+  position: sticky;
+  top: 73px;
+  background: var(--ink);
+  z-index: 20;
+}
+
+.category-pill {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.category-pill.active {
+  background: var(--paper);
+  color: var(--text-paper);
+}
+
+.category-pill:active {
+  transform: scale(0.95);
+}
+
+.category-load-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--surface-raised);
+  color: var(--danger, #e5484d);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.category-load-error #retryCategoriesBtn {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--text-paper);
+  font-weight: 600;
+  font-size: 13px;
+  border: none;
+  cursor: pointer;
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 8px 16px 24px;
+}
+
+.menu-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 14px;
+  min-height: 104px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.menu-card .name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--paper);
+  line-height: 1.35;
+}
+
+.menu-card .price {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.add-btn {
+  align-self: flex-end;
+  margin-top: 8px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--signal);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.add-btn:active {
+  transform: scale(0.9);
+}
+
+.no-table-warning {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 96px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--surface-raised);
+  color: var(--wait);
+  border: 1px solid var(--hairline);
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ---------------- Orders view (tickets) ---------------- */
+.orders-list {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.orders-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 40px 0;
+  font-size: 14px;
+}
+
+.ticket-card {
+  position: relative;
+  background: var(--paper);
+  color: var(--text-paper);
+  border-radius: 16px;
+  padding: 16px;
+  overflow: hidden;
+  animation: fadeInUp 0.25s ease-out;
+}
+
+.ticket-perforation {
+  position: absolute;
+  top: -8px;
+  left: 0;
+  right: 0;
+  height: 16px;
+  background-image: radial-gradient(circle, var(--ink) 3px, transparent 3.5px);
+  background-size: 16px 16px;
+  background-position: top;
+}
+
+.ticket-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-top: 8px;
+}
+
+.ticket-eyebrow {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.6;
+  margin: 0;
+}
+
+.ticket-num {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 22px;
+  margin: 2px 0 0;
+}
+
+.ticket-divider {
+  border: none;
+  border-top: 1px dashed var(--paper-shadow);
+  margin: 12px 0;
+}
+
+.ticket-item-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  margin-bottom: 3px;
+}
+
+.ticket-total-row {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.ticket-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.status-chip {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.cancel-locked {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--paper-shadow);
+  color: var(--text-paper);
+  opacity: 0.75;
+}
+
+/* ---------------- Basket bottom sheet ---------------- */
+.basket-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 35;
+  background: var(--paper);
+  color: var(--text-paper);
+  border-top: 1px solid var(--hairline);
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -8px 24px rgba(0,0,0,0.35);
+}
+
+.basket-summary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: transparent;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-paper);
+}
+
+.basket-detail {
+  padding: 0 20px 18px;
+}
+
+.basket-items {
+  max-height: 180px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.basket-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.basket-item-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.basket-item-price {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  opacity: 0.65;
+}
+
+.qty-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qty-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.qty-btn.minus {
+  background: var(--paper-shadow);
+  color: var(--text-paper);
+}
+
+.qty-btn.plus {
+  background: var(--signal);
+  color: #fff;
+}
+
+.qty-value {
+  width: 20px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.basket-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px dashed var(--paper-shadow);
+  margin-bottom: 12px;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.send-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--signal);
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.send-btn:disabled {
+  opacity: 0.4;
+}
+
+.send-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* ---------------- Toast ---------------- */
+.toast {
+  position: fixed;
+  top: 76px;
+  left: 16px;
+  right: 16px;
+  z-index: 9999; /* must stay above .modal-overlay's z-index: 1000, or a
+                    toast fired while a modal is open renders behind it
+                    and is invisible — this was the actual bug reported */
+  background: var(--surface-raised);
+  border: 1px solid var(--go);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--paper);
+  animation: toastIn 0.2s ease-out;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+}
+
+
+/* ---------------- Customize item modal ---------------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000; /* above the mobile checkout bar's z-index: 100 (waiter.css
+                    mobile block) — that gap (60 vs 100) was the actual bug:
+                    the fixed checkout bar was rendering on top of this modal
+                    on mobile, covering the Add button underneath it. */
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 480px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* the scrolling body below handles its own scroll —
+                        the modal shell itself shouldn't scroll as one
+                        block, or the action bar could scroll out of view */
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: 20px 20px 0 0;
+  padding: 22px 20px 24px;
+}
+
+.modal-card-body {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0; /* required in a flex column for the child to actually shrink/scroll instead of pushing the footer out */
+}
+
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  letter-spacing: 0.03em;
+  color: var(--paper);
+  margin: 0 0 2px;
+}
+
+.modal-sub {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0 0 16px;
+}
+
+.customize-section {
+  margin-bottom: 18px;
+}
+
+.customize-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+
+.option-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.option-chip {
+  padding: 9px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--surface);
+  color: var(--text-main);
+  border: 1px solid var(--hairline);
+}
+
+.option-chip.selected {
+  background: var(--signal);
+  border-color: var(--signal);
+  color: #fff;
+}
+
+.option-chip .extra-price {
+  font-family: var(--font-mono);
+  opacity: 0.75;
+  margin-left: 4px;
+}
+
+.ingredient-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.ingredient-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  text-align: left;
+}
+
+.ingredient-toggle-icon {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.ingredient-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+/* Base ingredients — included by default (light bg, red icon).
+   Toggling off just grays the whole card out, no 'X' overlay. */
+.ingredient-card.remove-type .ingredient-toggle-icon {
+  background: var(--signal-dim);
+  color: var(--danger);
+}
+
+.ingredient-card.remove-type.included {
+  background: var(--surface-raised);
+  border-color: var(--danger);
+}
+
+.ingredient-card.remove-type:not(.included) {
+  opacity: 0.5;
+}
+
+.ingredient-card.remove-type:not(.included) .ingredient-toggle-icon {
+  background: var(--surface);
+  color: var(--text-muted);
+}
+
+.ingredient-card.remove-type:not(.included) .ingredient-card-name {
+  color: var(--text-muted);
+}
+
+/* Extras — off by default (green plus), green highlight when selected */
+.ingredient-card.extra-type .ingredient-toggle-icon {
+  background: var(--surface-raised);
+  color: var(--go);
+}
+
+.ingredient-card.extra-type.selected {
+  background: rgba(51, 196, 140, 0.14);
+  border-color: var(--go);
+}
+
+.ingredient-card.extra-type.selected .ingredient-toggle-icon {
+  background: var(--go);
+  color: #fff;
+}
+
+.ingredient-card .extra-price {
+  font-family: var(--font-mono);
+  opacity: 0.75;
+  margin-left: 4px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+  padding-top: 14px;
+  flex-shrink: 0; /* stays pinned below the scrollable body, never scrolls away */
+}
+
+.modal-error {
+  flex-shrink: 0;
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 71, 87, 0.12);
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.modal-actions button {
+  flex: 1;
+}
+
+.primary-btn {
+  padding: 13px 16px;
+  border-radius: 12px;
+  background: var(--signal);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.primary-btn:active {
+  transform: scale(0.98);
+}
+
+.secondary-btn {
+  padding: 13px 16px;
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text-main);
+  font-weight: 700;
+  font-size: 14px;
+  border: 1px solid var(--hairline);
+}
+
+/* Item customization summary shown under the name in basket & tickets */
+.item-customization {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* --- Date line under the title, matching the Waiter screen's header style --- */
+.app-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted, #9aa3af);
+  margin-top: 2px;
+}
+.date-line {
+  margin-top: 1px;
+}
+
+/* --- Sub-category tabs (e.g. Hot Drinks / Juices & Smoothies / Soft Drinks / Alcohol under "Drinks") --- */
+.subcategory-tabs {
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+.subcategory-pill {
+  background: transparent;
+  border: 1px solid var(--wait, #f2b84b);
+  color: var(--wait, #f2b84b);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.subcategory-pill.active {
+  background: var(--wait, #f2b84b);
+  color: #12151a;
+  font-weight: 600;
+}
+
+/* --- Third-level tabs (e.g. Red Wine / Whisky / Vodka under Alcohol under Drinks) --- */
+.subsubcategory-tabs {
+  margin-top: 2px;
+}
+.subsubcategory-pill {
+  border-color: var(--prog, #4ea1f2);
+  color: var(--prog, #4ea1f2);
+  font-size: 0.8rem;
+  padding: 5px 12px;
+}
+.subsubcategory-pill.active {
+  background: var(--prog, #4ea1f2);
+  color: #12151a;
+}
+
+/* --- Day picker (My Orders history page) --- */
+.date-picker-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted, #9aa3af);
+  margin: 12px 0;
+}
+.date-input {
+  background: var(--surface, #12151a);
+  color: var(--text-main, #f3ecd8);
+  border: 1px solid var(--hairline, #2a2f3a);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+}
+
+/* --- Push the logout button away from the other header buttons --- */
+#logoutBtn {
+  margin-left: 24px;
+}
+
+/* --- 3-step ordering flow: table selection -> menu -> checkout --- */
+.step-section {
+  padding: 16px;
+  padding-bottom: 24px;
+}
+.big-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 16px;
+}
+.big-chip-row .chip {
+  min-width: 84px;
+  min-height: 64px;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.step-nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.ordering-for {
+  font-size: 0.95rem;
+  color: var(--text-muted, #9aa3af);
+}
+.ordering-for strong {
+  color: var(--paper, #f3ecd8);
+}
+.checkout-bar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--surface, #12151a);
+  border-top: 1px solid var(--hairline, #2a2f3a);
+  padding: 14px 16px;
+  margin-top: 16px;
+  border-radius: 12px 12px 0 0;
+}
+.checkout-summary {
+  font-size: 0.9rem;
+  color: var(--text-muted, #9aa3af);
+}
+.checkout-bar .primary-btn {
+  flex: none;
+  padding: 13px 22px;
+}
+.checkout-bar .primary-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.receipt-title {
+  margin: 4px 0 12px;
+  font-family: var(--font-display, inherit);
+  color: var(--paper, #f3ecd8);
+}
+
+/* Step 3's receipt uses the same item-row markup as the old basket sheet,
+   but as a plain list on the page rather than inside a bottom sheet. */
+#stepCheckout .basket-items {
+  max-height: none;
+}
+#stepCheckout .send-btn {
+  margin-top: 16px;
+}
+
+/* Only the top-level main-category row should stick to the header on
+   scroll. The sub-category and sub-sub-category rows inherited that same
+   sticky positioning from the shared .category-tabs class, which made
+   all three rows stack at the same spot and overlap — hiding the main
+   Drinks/Meals/Snacks row underneath the row(s) below it. */
+.category-tabs.subcategory-tabs {
+  position: static;
+  top: auto;
+  z-index: auto;
+}
+
+/* --- Two explicitly separate containers for the category filters --- */
+
+/* Container 1: main categories (Drinks / Meals / Snacks) — a fixed,
+   non-scrolling row. Only ever has 3 items, so it wraps instead of
+   scrolling, and gets a visible bottom border to mark it as its own bar. */
+.main-category-bar {
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--hairline, #2a2f3a);
+}
+.main-category-bar .category-tabs {
+  overflow-x: visible;
+  flex-wrap: wrap;
+  position: static;
+  padding: 0;
+  top: auto;
+  z-index: auto;
+}
+
+/* Container 2: subcategories — a separate block below the main bar,
+   with its own background so it visually reads as a distinct section.
+   Each row inside it (sub, sub-sub) still scrolls horizontally on its own. */
+.sub-category-bar {
+  padding: 10px 16px 4px;
+  background: var(--surface, #12151a);
+}
+.sub-category-bar .category-tabs {
+  padding: 0;
+  margin-bottom: 8px;
+}
+
+/* ---------------- Mobile compact layout (phones) ---------------- */
+@media (max-width: 600px) {
+  .app-header {
+    padding: 10px 12px;
+  }
+
+  .app-title {
+    font-size: 1.2rem;
+  }
+
+  .app-subtitle {
+    font-size: 11px;
+  }
+
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+
+  .category-tabs {
+    padding: 10px 12px 6px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 8px;
+  }
+
+  /* .main-category-bar .category-tabs normally forces flex-wrap: wrap
+     (see that rule above) so the top row reads fine on wider screens —
+     on phones that's what was causing Top Items/Drinks/Meals/Snacks to
+     stack across multiple lines. Override it here so the main row stays
+     a single horizontally-scrollable line like the sub-category rows. */
+  .main-category-bar .category-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .category-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .category-tabs {
+    scrollbar-width: none;
+  }
+
+  .category-pill,
+  .subcategory-pill,
+  .subsubcategory-pill {
+    padding: 7px 12px;
+    font-size: 0.85rem;
+  }
+
+  .menu-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 6px 12px 20px;
+    padding-bottom: 70px; /* keeps items clear of the now-fixed checkout bar */
+  }
+
+  .menu-card {
+    padding: 10px;
+    min-height: 90px;
+  }
+
+  .menu-card .name {
+    font-size: 0.95rem;
+  }
+
+  .menu-card .price {
+    font-size: 0.85rem;
+  }
+
+  .add-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .checkout-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    margin: 0;
+    border-radius: 0;
+  }
+}
