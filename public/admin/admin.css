@@ -10,13 +10,12 @@ body {
   flex-direction: column;
   gap: 12px;
   padding: 16px 24px;
-  background: var(--ink);
-  border-bottom: 1px solid var(--hairline);
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--glass-border);
 }
 
-/* Top row: title on the left, hamburger in the top-right corner beside
-   it on mobile (hamburger itself is hidden again at desktop widths —
-   see .hamburger-btn below). */
 .header-top-row {
   display: flex;
   justify-content: space-between;
@@ -72,29 +71,45 @@ body {
 }
 
 .date-input {
-  background: var(--surface-raised);
-  border: 1px solid var(--hairline);
+  background: var(--glass-fill-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
   border-radius: 8px;
   padding: 8px 10px;
   color: var(--text-main);
   font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.date-input:focus {
+  outline: none;
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
 }
 
 .icon-btn {
   width: 44px;
   height: 44px;
-  border-radius: 10px;
-  background: var(--surface-raised);
-  border: 1px solid var(--hairline);
+  border-radius: var(--glass-radius);
+  background: var(--glass-fill-light);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid var(--glass-border);
   font-size: 18px;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
 }
 
 .icon-btn:active {
   transform: scale(0.95);
 }
 
-/* Hamburger menu — visible by default (mobile-first), hidden on desktop
-   by the min-width media query below. */
 .hamburger-btn {
   font-size: 20px;
 }
@@ -113,8 +128,10 @@ body {
   flex-direction: column;
   gap: 4px;
   padding: 10px 16px 16px;
-  background: var(--ink);
-  border-bottom: 1px solid var(--hairline);
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .mobile-nav-item {
@@ -122,14 +139,19 @@ body {
   text-align: left;
   padding: 12px 14px;
   border-radius: 10px;
-  background: var(--surface-raised);
+  background: var(--glass-fill-light);
+  border: 1px solid var(--glass-border);
   color: var(--text-muted);
   font-weight: 700;
   font-size: 14px;
+  transition: all 0.2s ease;
 }
 
 .mobile-nav-item.active {
-  background: var(--signal);
+  background: var(--accent-glass);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border-color: rgba(255, 255, 255, 0.25);
   color: #fff;
 }
 
@@ -139,8 +161,6 @@ body {
   padding: 16px 24px 0;
 }
 
-/* On mobile, navigation lives in the hamburger dropdown above instead —
-   free up the vertical space the horizontal tab row would otherwise take. */
 @media (max-width: 767px) {
   .view-toggle {
     display: none;
@@ -150,14 +170,27 @@ body {
 .toggle-btn {
   padding: 10px 18px;
   border-radius: 10px;
-  background: var(--surface-raised);
+  background: var(--glass-fill-light);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid var(--glass-border);
   color: var(--text-muted);
   font-weight: 700;
   font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn:hover {
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
 }
 
 .toggle-btn.active {
-  background: var(--signal);
+  background: var(--accent-glass);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border-color: rgba(255, 255, 255, 0.25);
   color: #fff;
 }
 
@@ -173,9 +206,12 @@ body {
 }
 
 .stat-card {
-  background: var(--surface-raised);
-  border: 1px solid var(--hairline);
-  border-radius: 14px;
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--glass-radius);
   padding: 16px;
 }
 
@@ -209,9 +245,12 @@ body {
 }
 
 .panel {
-  background: var(--surface);
-  border: 1px solid var(--hairline);
-  border-radius: 14px;
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--glass-radius);
   padding: 18px;
   margin-bottom: 18px;
 }
@@ -221,6 +260,8 @@ body {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 4px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .panel-title {
@@ -249,13 +290,13 @@ table.grid th {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-muted);
-  border-bottom: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--glass-border);
   white-space: nowrap;
 }
 
 table.grid td {
   padding: 10px;
-  border-bottom: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--glass-border);
   color: var(--text-main);
   vertical-align: middle;
 }
@@ -292,9 +333,9 @@ table.grid tr:last-child td {
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
-  background: var(--surface-raised);
+  background: var(--glass-fill-light);
   color: var(--text-muted);
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--glass-border);
 }
 
 .active-pill {
@@ -314,37 +355,53 @@ table.grid tr:last-child td {
   border-radius: 8px;
   font-size: 12px;
   font-weight: 700;
+  transition: all 0.2s ease;
 }
 
 .small-btn.void {
-  background: var(--danger);
+  background: rgba(255, 71, 87, 0.75);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   color: #fff;
 }
 
 .small-btn.void:disabled {
-  background: var(--surface-raised);
+  background: var(--glass-fill-light);
   color: var(--text-muted);
   cursor: not-allowed;
 }
 
 .small-btn.toggle-on {
-  background: var(--go);
+  background: rgba(51, 196, 140, 0.8);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   color: var(--ink);
 }
 
 .small-btn.toggle-off {
-  background: var(--surface-raised);
+  background: var(--glass-fill-light);
   color: var(--text-muted);
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--glass-border);
 }
 
 .primary-btn {
   padding: 10px 18px;
   border-radius: 10px;
-  background: var(--signal);
+  background: var(--accent-glass);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   color: #fff;
   font-weight: 700;
   font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.primary-btn:hover {
+  background: rgba(255, 90, 60, 0.9);
+  transform: translateY(-1px);
 }
 
 .primary-btn:active {
@@ -354,20 +411,38 @@ table.grid tr:last-child td {
 .secondary-btn {
   padding: 10px 18px;
   border-radius: 10px;
-  background: var(--surface-raised);
+  background: var(--glass-fill-light);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
   color: var(--text-main);
   font-weight: 700;
   font-size: 13px;
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--glass-border);
+  transition: all 0.2s ease;
+}
+
+.secondary-btn:hover {
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
 }
 
 .danger-btn {
   padding: 10px 18px;
   border-radius: 10px;
-  background: var(--danger);
+  background: rgba(255, 71, 87, 0.75);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   color: #fff;
   font-weight: 700;
   font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.danger-btn:hover {
+  background: rgba(255, 71, 87, 0.9);
+  transform: translateY(-1px);
 }
 
 /* ---------------- Modal ---------------- */
@@ -375,6 +450,8 @@ table.grid tr:last-child td {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -385,8 +462,11 @@ table.grid tr:last-child td {
 .modal-card {
   width: 100%;
   max-width: 400px;
-  background: var(--surface-raised);
-  border: 1px solid var(--hairline);
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
   border-radius: 16px;
   padding: 24px;
 }
@@ -421,10 +501,20 @@ table.grid tr:last-child td {
   width: 100%;
   padding: 11px 13px;
   border-radius: 10px;
-  border: 1px solid var(--hairline);
-  background: var(--surface);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-fill-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: var(--text-main);
   font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.modal-card input:focus,
+.modal-card select:focus {
+  outline: none;
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
 }
 
 .field-hint {
@@ -455,7 +545,9 @@ table.grid tr:last-child td {
   top: 76px;
   right: 24px;
   z-index: 60;
-  background: var(--surface-raised);
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--go);
   border-radius: 12px;
   padding: 12px 16px;
@@ -463,7 +555,7 @@ table.grid tr:last-child td {
   font-weight: 500;
   color: var(--paper);
   animation: toastIn 0.2s ease-out;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+  box-shadow: var(--glass-shadow);
 }
 
 .toast.error {
@@ -472,9 +564,9 @@ table.grid tr:last-child td {
 
 /* ---------------- Order details modal ---------------- */
 .small-btn.view {
-  background: var(--surface-raised);
+  background: var(--glass-fill-light);
   color: var(--text-main);
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--glass-border);
   margin-right: 6px;
 }
 
@@ -526,13 +618,13 @@ table.grid tr:last-child td {
 }
 
 .details-divider {
-  border-top: 1px dashed var(--hairline);
+  border-top: 1px dashed var(--glass-border);
   margin: 12px 0;
 }
 
 .details-item {
   padding: 8px 0;
-  border-bottom: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .details-item:last-of-type {
@@ -563,6 +655,8 @@ table.grid tr:last-child td {
   padding: 12px 14px;
   border-radius: 12px;
   background: rgba(255, 71, 87, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--danger);
 }
 
@@ -574,11 +668,6 @@ table.grid tr:last-child td {
 }
 
 /* ---------------- Category filter (Drinks / Food) ---------------- */
-.panel-header-row {
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
 .category-filter-row {
   display: flex;
   gap: 6px;
@@ -587,16 +676,19 @@ table.grid tr:last-child td {
 .cat-filter-btn {
   padding: 6px 12px;
   border-radius: 999px;
-  background: var(--surface-raised);
+  background: var(--glass-fill-light);
   color: var(--text-muted);
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--glass-border);
   font-size: 12px;
   font-weight: 700;
+  transition: all 0.2s ease;
 }
 
 .cat-filter-btn.active {
-  background: var(--signal);
-  border-color: var(--signal);
+  background: var(--accent-glass);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border-color: rgba(255, 255, 255, 0.25);
   color: #fff;
 }
 
@@ -605,8 +697,10 @@ table.grid tr:last-child td {
 }
 
 .menu-search-input {
-  background: var(--surface-raised);
-  border: 1px solid var(--hairline);
+  background: var(--glass-fill-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
   border-radius: 8px;
   padding: 8px 12px;
   color: var(--text-main);
@@ -614,6 +708,7 @@ table.grid tr:last-child td {
   flex: 1 1 200px;
   min-width: 160px;
   max-width: 320px;
+  transition: all 0.2s ease;
 }
 
 .menu-search-input::placeholder {
@@ -622,6 +717,7 @@ table.grid tr:last-child td {
 
 .menu-search-input:focus {
   outline: none;
+  background: var(--glass-fill-hover);
   border-color: var(--signal);
 }
 
@@ -634,13 +730,13 @@ table.grid tr:last-child td {
   padding: 1px 6px;
   border-radius: 5px;
   margin-right: 4px;
-  background: var(--surface);
+  background: var(--glass-fill-light);
   color: var(--text-muted);
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--glass-border);
 }
 
 .total-row td {
-  border-top: 2px solid var(--hairline);
+  border-top: 2px solid var(--glass-border);
   border-bottom: none;
   padding-top: 12px;
   color: var(--paper);
@@ -671,8 +767,10 @@ table.grid tr:last-child td {
   width: 90px;
   padding: 7px 9px;
   border-radius: 8px;
-  border: 1px solid var(--hairline);
-  background: var(--surface);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-fill-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: var(--text-main);
   font-size: 13px;
   font-family: var(--font-mono);
@@ -685,14 +783,17 @@ table.grid tr:last-child td {
 }
 
 .small-btn.save-qty {
-  background: var(--go);
+  background: rgba(51, 196, 140, 0.8);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   color: var(--ink);
 }
 
 .small-btn.edit-stock {
-  background: var(--surface-raised);
+  background: var(--glass-fill-light);
   color: var(--text-main);
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--glass-border);
 }
 
 /* ---------------- Stock -> menu item links ---------------- */
@@ -709,8 +810,8 @@ table.grid tr:last-child td {
   gap: 6px;
   padding: 4px 8px;
   border-radius: 999px;
-  background: var(--surface);
-  border: 1px solid var(--hairline);
+  background: var(--glass-fill-light);
+  border: 1px solid var(--glass-border);
   color: var(--text-main);
   font-size: 12px;
 }
@@ -730,9 +831,9 @@ table.grid tr:last-child td {
 }
 
 .small-btn.link-item-btn {
-  background: var(--surface-raised);
+  background: var(--glass-fill-light);
   color: var(--text-main);
-  border: 1px dashed var(--hairline);
+  border: 1px dashed var(--glass-border);
 }
 
 /* ---------------- Top Sellers toggle ---------------- */
@@ -748,8 +849,10 @@ table.grid tr:last-child td {
 }
 
 .top-sellers-btn.active {
-  background: var(--signal);
-  border-color: var(--signal);
+  background: var(--accent-glass);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border-color: rgba(255, 255, 255, 0.25);
   color: #fff;
 }
 
@@ -798,7 +901,7 @@ table.grid tr:last-child td {
 }
 
 .modal-divider {
-  border-top: 1px dashed var(--hairline);
+  border-top: 1px dashed var(--glass-border);
   margin: 18px 0 4px;
 }
 
@@ -827,8 +930,8 @@ table.grid tr:last-child td {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: var(--surface);
-  border: 1px solid var(--hairline);
+  background: var(--glass-fill-light);
+  border: 1px solid var(--glass-border);
   color: var(--danger);
   font-size: 14px;
   flex-shrink: 0;
@@ -842,7 +945,10 @@ table.grid tr:last-child td {
 }
 
 .small-btn.price-save {
-  background: var(--go);
+  background: rgba(51, 196, 140, 0.8);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   color: var(--ink);
 }
 
@@ -850,8 +956,10 @@ table.grid tr:last-child td {
   width: 90px;
   padding: 7px 9px;
   border-radius: 8px;
-  border: 1px solid var(--hairline);
-  background: var(--surface);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-fill-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: var(--text-main);
   font-size: 13px;
   font-family: var(--font-mono);
