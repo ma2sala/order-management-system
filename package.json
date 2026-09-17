@@ -1,10 +1,11 @@
 {
   "name": "order-management-system",
   "version": "1.0.0",
-  "description": "Waiter-to-barista order management system with real-time Socket.io updates, manager-gated voids, and audit logging.",
+  "description": "Waiter-to-barista order management system with real-time Socket.io updates, multi-role dashboards, and PostgreSQL database.",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
+    "build": "npx prisma generate && npx prisma migrate deploy",
     "dev": "nodemon src/server.js",
     "seed": "node src/seed.js",
     "prisma:migrate": "prisma migrate dev",
