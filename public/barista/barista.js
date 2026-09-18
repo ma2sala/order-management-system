@@ -129,7 +129,10 @@
     socket.on('new_order', (order) => {
       console.log('[barista] Socket received new_order event:', order);
       activeTickets.unshift(order);
-      flashAndChime(order.id);
+      // Only flash/chime if this order actually has something for the bar
+      // to make — a food-only order is silently added (so it's tracked for
+      // status purposes) but doesn't interrupt the barista.
+      if (hasBarItems(order)) flashAndChime(order.id);
       render();
     });
 
@@ -145,6 +148,13 @@
     socket.on('connect_error', (err) => {
       console.error('Socket connection error:', err.message);
     });
+  }
+
+  // A ticket only belongs on this display if at least one of its items
+  // is tagged for the bar station (see orderController.js's stationOf()).
+  // A food-only order has nothing for Barista to prepare.
+  function hasBarItems(ticket) {
+    return ticket.items.some((it) => it.station === 'bar');
   }
 
   function flashAndChime(id) {
@@ -218,24 +228,27 @@
 
   // ---------------- Rendering ----------------
   function render() {
-    const pending = activeTickets.filter((t) => t.status === 'PENDING').length;
-    const inProgress = activeTickets.filter((t) => t.status === 'IN_PROGRESS').length;
+    const barActive = activeTickets.filter(hasBarItems);
+    const barCompleted = completedTickets.filter(hasBarItems);
+
+    const pending = barActive.filter((t) => t.status === 'PENDING').length;
+    const inProgress = barActive.filter((t) => t.status === 'IN_PROGRESS').length;
     pendingCountEl.textContent = pending;
     progressCountEl.textContent = inProgress;
-    activeTabCount.textContent = activeTickets.length ? `(${activeTickets.length})` : '';
-    completedTabCount.textContent = completedTickets.length ? `(${completedTickets.length})` : '';
+    activeTabCount.textContent = barActive.length ? `(${barActive.length})` : '';
+    completedTabCount.textContent = barCompleted.length ? `(${barCompleted.length})` : '';
 
-    renderActive();
-    renderCompleted();
+    renderActive(barActive);
+    renderCompleted(barCompleted);
   }
 
-  function renderActive() {
-    if (activeTickets.length === 0) {
+  function renderActive(barActive) {
+    if (barActive.length === 0) {
       activeView.innerHTML = '<div class="empty-state">No active tickets. New orders will flash in here.</div>';
       return;
     }
 
-    activeView.innerHTML = activeTickets.map(ticketCardHtml).join('');
+    activeView.innerHTML = barActive.map(ticketCardHtml).join('');
 
     activeView.querySelectorAll('[data-action="start"]').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -274,6 +287,7 @@
         <div class="items-box">
           <div class="items-label">Items</div>
           ${ticket.items
+            .filter((it) => it.station === 'bar')
             .map(
               (it) => `
             <div class="item-row">
@@ -296,12 +310,12 @@
       </div>`;
   }
 
-  function renderCompleted() {
-    if (completedTickets.length === 0) {
+  function renderCompleted(barCompleted) {
+    if (barCompleted.length === 0) {
       completedView.innerHTML = '<div class="empty-state">Completed tickets will appear here.</div>';
       return;
     }
-    completedView.innerHTML = completedTickets
+    completedView.innerHTML = barCompleted
       .map(
         (t) => `
         <div class="completed-mini">
@@ -310,7 +324,7 @@
             <span class="done-chip">✅ Done</span>
           </div>
           <p>${escapeHtml(t.table.label)} · ${escapeHtml(t.waiter.name)}</p>
-          <p>${t.items.map((it) => `${it.quantity}× ${escapeHtml(it.menuItem.name)}`).join(', ')}</p>
+          <p>${t.items.filter((it) => it.station === 'bar').map((it) => `${it.quantity}× ${escapeHtml(it.menuItem.name)}`).join(', ')}</p>
         </div>`
       )
       .join('');

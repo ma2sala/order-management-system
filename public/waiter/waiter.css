@@ -1005,6 +1005,36 @@ body {
   margin-top: 16px;
 }
 
+/* ---------------- Order Summary — frosted glass panel ----------------
+   Wraps the item list, modifiers, and total row so they read clearly
+   against the background photo, with explicit high-contrast colors
+   rather than relying on inherited theme text colors. */
+.order-summary-panel {
+  background: rgba(15, 20, 28, 0.75);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  margin-bottom: 16px;
+}
+
+.order-summary-panel .basket-item-name,
+.order-summary-panel .basket-total-row {
+  color: #ffffff;
+}
+
+.order-summary-panel .basket-item-price,
+.order-summary-panel .item-customization {
+  color: #94a3b8;
+}
+
+.order-summary-panel .basket-total-row {
+  border-top: 1px dashed rgba(255, 255, 255, 0.15);
+}
+
+
 /* Only the top-level main-category row should stick to the header on
    scroll. */
 .category-tabs.subcategory-tabs {
