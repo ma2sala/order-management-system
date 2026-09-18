@@ -3,10 +3,13 @@ const path = require('path');
 const multer = require('multer');
 
 // Payment-proof screenshots (e.g. a Telebirr confirmation screen) live
-// under public/, so express.static in app.js serves them directly at
-// /uploads/payment-screenshots/<filename> — no separate download route
-// needed.
-const UPLOAD_DIR = path.join(__dirname, '..', '..', 'public', 'uploads', 'payment-screenshots');
+// OUTSIDE public/, at the repo root's uploads/ folder — see app.js for
+// the matching /uploads static route. This path is meant to be a
+// Railway persistent volume mount (Settings -> Volumes on the
+// order-management-system service, mount path /app/uploads), so files
+// written here survive future deploys instead of being wiped along with
+// the rest of the container on every redeploy.
+const UPLOAD_DIR = path.join(__dirname, '..', '..', 'uploads', 'payment-screenshots');
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 const storage = multer.diskStorage({

@@ -1069,3 +1069,16 @@ table.grid tr:last-child td {
     font-size: 14px;
   }
 }
+
+.lightbox-fallback {
+  padding: 40px 60px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
+}

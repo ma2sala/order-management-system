@@ -22,6 +22,16 @@ function createApp() {
   // http://localhost:PORT/waiter/  and  http://localhost:PORT/barista/
   app.use(express.static(path.join(__dirname, '..', 'public')));
 
+  // Payment-proof screenshots live OUTSIDE public/ on purpose — public/ is
+  // part of the git repo and gets replaced wholesale on every deploy,
+  // which would wipe any uploaded file. This directory instead lives at
+  // the repo root (../uploads) and is meant to be a Railway persistent
+  // volume mounted there, so uploads survive redeploys. Served at the
+  // same /uploads/... URL the app already used, so no frontend/DB change
+  // is needed — see UPLOAD_DIR in middleware/upload.js for the matching
+  // write-side path.
+  app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+
   app.use('/api/auth', authRouter);
   app.use('/api/orders', ordersRouter);
   app.use('/api', catalogRouter); // /api/tables, /api/categories

@@ -188,6 +188,7 @@
 
   const screenshotLightbox = document.getElementById('screenshotLightbox');
   const lightboxImage = document.getElementById('lightboxImage');
+  const lightboxFallback = document.getElementById('lightboxFallback');
   const lightboxCloseBtn = document.getElementById('lightboxCloseBtn');
 
   const toastEl = document.getElementById('toast');
@@ -880,9 +881,18 @@
 
   // ---------------- Payment screenshot lightbox ----------------
   function openScreenshotLightbox(url) {
+    lightboxImage.classList.remove('hidden');
+    lightboxFallback.classList.add('hidden');
     lightboxImage.src = url;
     screenshotLightbox.classList.remove('hidden');
   }
+  // A screenshot uploaded before the app started using a persistent
+  // volume (or on a host with no volume at all) 404s here — show a clear
+  // message instead of a broken-image icon.
+  lightboxImage.addEventListener('error', () => {
+    lightboxImage.classList.add('hidden');
+    lightboxFallback.classList.remove('hidden');
+  });
   lightboxCloseBtn.addEventListener('click', () => screenshotLightbox.classList.add('hidden'));
   screenshotLightbox.addEventListener('click', (e) => {
     if (e.target === screenshotLightbox) screenshotLightbox.classList.add('hidden');
