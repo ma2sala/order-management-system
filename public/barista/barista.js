@@ -175,6 +175,20 @@
     return ticket.items.some((it) => it.station === 'bar');
   }
 
+  // GET /api/orders (used both at boot and by the 3-second polling
+  // backstop below) filters on the ORDER's overall status, which stays
+  // PENDING/IN_PROGRESS until every station — not just this one — is
+  // done. Without this check, a ticket whose bar side is already
+  // COMPLETED but whose kitchen side is still active would keep coming
+  // back from that endpoint and get treated as "still active for the
+  // bar" by reconcileActiveTickets/boot() below, reappearing in the
+  // queue the moment Chef touches their own side of the same order.
+  // This is the one source of truth for whether a ticket belongs in
+  // Barista's active queue at all.
+  function isBarActive(ticket) {
+    return ticket.barStatus === 'PENDING' || ticket.barStatus === 'IN_PROGRESS';
+  }
+
   function flashAndChime(id) {
     playChime();
     flashIds.add(id);
@@ -441,10 +455,14 @@
   // (e.g. between clicking "Start" and the PATCH request resolving).
   function reconcileActiveTickets(serverTickets) {
     const knownIds = new Set(activeTickets.map((t) => t.id));
-    const serverIds = new Set(serverTickets.map((t) => t.id));
+    // Only tickets that are genuinely still active FOR THE BAR — see
+    // isBarActive() above for why the raw server list isn't enough on
+    // its own (it reflects the whole order, not this station).
+    const barActiveServerTickets = serverTickets.filter(isBarActive);
+    const barActiveServerIds = new Set(barActiveServerTickets.map((t) => t.id));
 
     // Anything the server has that we don't (a missed socket event)
-    serverTickets.forEach((t) => {
+    barActiveServerTickets.forEach((t) => {
       if (!knownIds.has(t.id)) {
         activeTickets.push(t);
         flashAndChime(t.id);
@@ -452,8 +470,11 @@
     });
 
     // Anything we still have locally that the server no longer counts as
-    // active (completed/voided from elsewhere, e.g. the manager dashboard)
-    activeTickets = activeTickets.filter((t) => serverIds.has(t.id));
+    // active for the bar (completed/voided — from this screen, or from
+    // Barista's OWN completion a moment ago that the server has now
+    // confirmed) — this is also what actually removes a just-completed
+    // ticket instead of letting the next poll resurrect it.
+    activeTickets = activeTickets.filter((t) => barActiveServerIds.has(t.id));
   }
 
   async function pollActiveOrders() {
@@ -484,7 +505,7 @@
       ]);
       console.log('[barista] API response orders fetched (initial active):', active);
       console.log('[barista] API response orders fetched (initial completed):', completed);
-      activeTickets = active;
+      activeTickets = active.filter(isBarActive);
       completedTickets = completed;
     } catch (err) {
       console.error('Failed to load orders:', err);

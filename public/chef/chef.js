@@ -88,6 +88,17 @@
     return orders.map(narrowToKitchen).filter(Boolean);
   }
 
+  // GET /api/orders filters on the ORDER's overall status, which stays
+  // PENDING/IN_PROGRESS until EVERY station — not just kitchen — is
+  // done. Without this check, a ticket whose kitchen side is already
+  // COMPLETED but whose bar side is still active would keep coming back
+  // from that endpoint and get treated as "still active for the
+  // kitchen" by reconcileActiveTickets/boot() below, reappearing in the
+  // queue the moment Barista touches their own side of the same order.
+  function isKitchenActive(ticket) {
+    return ticket.kitchenStatus === 'PENDING' || ticket.kitchenStatus === 'IN_PROGRESS';
+  }
+
   // ---------------- Login ----------------
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -443,6 +454,11 @@
   // reconnecting. It merges rather than replaces activeTickets, so it
   // can't stomp on a ticket this screen is mid-way through updating
   // (e.g. between clicking "Start" and the PATCH request resolving).
+  // Expects serverTickets already narrowed to kitchen items AND filtered
+  // to isKitchenActive() (see pollActiveOrders below) — this function
+  // trusts that list as "everything currently active for the kitchen"
+  // and doesn't re-derive it, so don't call this with a raw, unfiltered
+  // order list.
   function reconcileActiveTickets(serverTickets) {
     const knownIds = new Set(activeTickets.map((t) => t.id));
     const serverIds = new Set(serverTickets.map((t) => t.id));
@@ -460,7 +476,7 @@
   async function pollActiveOrders() {
     try {
       const active = await api('/api/orders');
-      const narrowed = narrowToKitchenMany(active);
+      const narrowed = narrowToKitchenMany(active).filter(isKitchenActive);
       console.log('[chef] API response orders fetched (poll):', narrowed);
       reconcileActiveTickets(narrowed);
       render();
@@ -480,7 +496,7 @@
         api('/api/orders'),
         api(`/api/orders/completed?date=${completedDateInput.value}&station=kitchen`),
       ]);
-      activeTickets = narrowToKitchenMany(active);
+      activeTickets = narrowToKitchenMany(active).filter(isKitchenActive);
       completedTickets = narrowToKitchenMany(completed);
       console.log('[chef] API response orders fetched (initial active):', activeTickets);
       console.log('[chef] API response orders fetched (initial completed):', completedTickets);

@@ -211,8 +211,23 @@
     return res.json();
   }
 
+  // Addis Ababa is UTC+3, no DST — same reasoning as orderController.js's
+  // addisDayStart(). Neither the raw UTC date (new Date().toISOString())
+  // nor the browser/OS's own local date can be trusted to match Addis
+  // Ababa's calendar day — the manager's computer may be set to a
+  // different timezone entirely — so this shifts the current UTC instant
+  // by the fixed offset before reading the date off it. Keeping this
+  // function as the SINGLE source of "today" (used both for the date
+  // picker's default and for every currentDate === todayISO() live-event
+  // guard below) is what matters most: as long as both sides agree, the
+  // exact timezone convention chosen is less important than never drifting.
   function todayISO() {
-    return new Date().toISOString().slice(0, 10);
+    const ADDIS_ABABA_UTC_OFFSET_HOURS = 3;
+    const nowInAddis = new Date(Date.now() + ADDIS_ABABA_UTC_OFFSET_HOURS * 60 * 60 * 1000);
+    const y = nowInAddis.getUTCFullYear();
+    const m = String(nowInAddis.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(nowInAddis.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 
   function showToast(text, isError) {
