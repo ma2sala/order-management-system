@@ -1081,6 +1081,59 @@ table.grid tr:last-child td {
     font-weight: bold;
     font-size: 14px;
   }
+
+  /* Sales Summary Report — a full readable page, not the narrow
+     receipt-style print above. Everything else on the dashboard (nav
+     tabs, headers, background photo/glass panels, action buttons) is
+     already hidden by the `body * { visibility: hidden }` reset above;
+     this just makes #itemsSummaryPrintArea itself the one visible thing. */
+  #itemsSummaryPrintArea,
+  #itemsSummaryPrintArea * {
+    visibility: visible;
+  }
+  #itemsSummaryPrintArea {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 24px;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #000;
+    background: #fff;
+  }
+  #itemsSummaryPrintArea h1 {
+    font-size: 20px;
+    margin: 0 0 6px;
+  }
+  #itemsSummaryPrintArea .summary-print-meta {
+    font-size: 12px;
+    color: #444;
+    margin: 0 0 18px;
+  }
+  #itemsSummaryPrintArea table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  #itemsSummaryPrintArea th {
+    text-align: left;
+    padding: 8px 6px;
+    border-bottom: 2px solid #000;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  #itemsSummaryPrintArea td {
+    padding: 7px 6px;
+    border-bottom: 1px solid #ccc;
+  }
+  #itemsSummaryPrintArea .summary-print-total td {
+    border-top: 2px solid #000;
+    border-bottom: none;
+    padding-top: 10px;
+    font-size: 14px;
+  }
 }
 
 .lightbox-fallback {
@@ -1094,4 +1147,41 @@ table.grid tr:last-child td {
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
   border-radius: var(--glass-radius);
+}
+
+/* ---------------- TOTAL row: Print Summary button ---------------- */
+.total-row-revenue-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.print-summary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  background: var(--glass-fill-light);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--wait);
+  transition: all 0.2s ease;
+}
+
+.print-summary-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.print-summary-btn:hover {
+  background: var(--glass-fill-hover);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.print-summary-btn:active {
+  transform: scale(0.92);
 }

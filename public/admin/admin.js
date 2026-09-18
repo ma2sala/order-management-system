@@ -585,10 +585,58 @@
           <tr class="total-row">
             <td><strong>TOTAL</strong></td>
             <td class="mono-cell"><strong>${totalQuantity}</strong></td>
-            <td class="mono-cell"><strong>$${totalRevenue.toFixed(2)}</strong></td>
+            <td class="mono-cell">
+              <div class="total-row-revenue-cell">
+                <strong>$${totalRevenue.toFixed(2)}</strong>
+                <button type="button" id="printItemsSummaryBtn" class="print-summary-btn" title="Print Summary" aria-label="Print Summary">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                </button>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>`;
+
+    document.getElementById('printItemsSummaryBtn').addEventListener('click', () => printItemsSummary(filtered, totalQuantity, totalRevenue));
+  }
+
+  // ---------------- Print: Items Ordered summary ----------------
+  const PERIOD_TITLE = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
+  const CATEGORY_TITLE = { all: 'All Items', drinks: 'Drinks', food: 'Food' };
+
+  function printItemsSummary(items, totalQuantity, totalRevenue) {
+    const periodLabel = PERIOD_TITLE[itemsPeriod] || itemsPeriod;
+    const rangeLabel = formatPeriodLabel(itemsPeriod, currentDate); // e.g. "This Month (September 2026)"
+    const categoryLabel = CATEGORY_TITLE[itemsCategoryFilter] || itemsCategoryFilter;
+
+    const rowsHtml = items
+      .map(
+        (i) => `
+        <tr>
+          <td>${escapeHtml(i.name)}</td>
+          <td class="mono-cell">${i.quantity}</td>
+          <td class="mono-cell">$${i.revenue.toFixed(2)}</td>
+        </tr>`
+      )
+      .join('');
+
+    document.getElementById('itemsSummaryPrintArea').innerHTML = `
+      <h1>Sales Summary Report — ${periodLabel} (${escapeHtml(rangeLabel)})</h1>
+      <p class="summary-print-meta">Category: ${escapeHtml(categoryLabel)} &nbsp;·&nbsp; Generated ${new Date().toLocaleString()}</p>
+      <table>
+        <thead><tr><th>Item</th><th>Quantity</th><th>Revenue</th></tr></thead>
+        <tbody>
+          ${rowsHtml}
+          <tr class="summary-print-total">
+            <td><strong>TOTAL</strong></td>
+            <td class="mono-cell"><strong>${totalQuantity}</strong></td>
+            <td class="mono-cell"><strong>$${totalRevenue.toFixed(2)}</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+
+    window.print();
   }
 
   function renderFlaggedTable(details) {
