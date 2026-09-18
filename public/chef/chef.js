@@ -227,7 +227,16 @@
   // mixed food+drink order, whichever screen marks it Started/Complete
   // first flips that status for the whole order. The other display picks
   // up the change on its next 3-second poll.
+  // Guards against a status PATCH being sent twice for the same ticket —
+  // e.g. a very fast double-tap landing before the optimistic re-render
+  // below has swapped the button out.
+  const inFlightStatusUpdates = new Set();
+
   async function startPreparing(ticket) {
+    if (inFlightStatusUpdates.has(ticket.id)) return;
+    inFlightStatusUpdates.add(ticket.id);
+
+    const previousKitchenStatus = ticket.kitchenStatus;
     ticket.kitchenStatus = 'IN_PROGRESS';
     render();
     try {
@@ -237,10 +246,18 @@
       });
     } catch (err) {
       console.error('Failed to update status:', err);
+      ticket.kitchenStatus = previousKitchenStatus;
+      render();
+      showFailureToast('Failed to start preparing this ticket — try again.');
+    } finally {
+      inFlightStatusUpdates.delete(ticket.id);
     }
   }
 
   async function markComplete(ticket) {
+    if (inFlightStatusUpdates.has(ticket.id)) return;
+    inFlightStatusUpdates.add(ticket.id);
+
     activeTickets = activeTickets.filter((t) => t.id !== ticket.id);
     completedTickets.unshift({ ...ticket, kitchenStatus: 'COMPLETED', completedAt: new Date().toISOString() });
     completedTickets = completedTickets.slice(0, 30);
@@ -252,7 +269,27 @@
       });
     } catch (err) {
       console.error('Failed to update status:', err);
+      completedTickets = completedTickets.filter((t) => t.id !== ticket.id);
+      activeTickets.unshift(ticket);
+      render();
+      showFailureToast('Failed to mark this ticket complete — try again.');
+    } finally {
+      inFlightStatusUpdates.delete(ticket.id);
     }
+  }
+
+  function showFailureToast(message) {
+    let toast = document.getElementById('toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'toast';
+      toast.className = 'toast error hidden';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.remove('hidden');
+    clearTimeout(showFailureToast._t);
+    showFailureToast._t = setTimeout(() => toast.classList.add('hidden'), 3500);
   }
 
   // ---------------- Elapsed time ----------------
@@ -287,12 +324,16 @@
 
     activeView.querySelectorAll('[data-action="start"]').forEach((btn) => {
       btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        btn.disabled = true;
         const ticket = activeTickets.find((t) => t.id === btn.dataset.id);
         if (ticket) startPreparing(ticket);
       });
     });
     activeView.querySelectorAll('[data-action="complete"]').forEach((btn) => {
       btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        btn.disabled = true;
         const ticket = activeTickets.find((t) => t.id === btn.dataset.id);
         if (ticket) markComplete(ticket);
       });

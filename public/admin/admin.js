@@ -10,6 +10,7 @@
 
   let currentDate = todayISO();
   let currentOrders = [];
+  let lastOverviewReport = null; // cached report from the last loadOverview() call, patched live off socket events
   let pendingVoidOrderId = null;
 
   let itemsCategoryFilter = 'all'; // 'all' | 'drinks' | 'food' — for the Items Ordered Today panel
@@ -394,6 +395,7 @@
   async function loadOverview() {
     try {
       const report = await api(`/api/reports/daily?date=${currentDate}`);
+      lastOverviewReport = report;
       renderStatGrid(report);
       renderFlaggedTable(report.flaggedAttempts.details);
     } catch (err) {
@@ -1350,6 +1352,44 @@
       if (currentOrders.some((o) => o.id === order.id)) return; // already have it
       currentOrders.unshift(order);
       renderOrdersTable();
+
+      // Patch the two headline Overview numbers instantly off the same
+      // event, rather than re-fetching /api/reports/daily — that round
+      // trip was the source of the delay and the brief "No items ordered
+      // on this day" empty-state flicker while it was in flight. The
+      // other cards (Voided, Logged Revenue, Reconciled, Blocked
+      // Attempts) are audit/reconciliation figures — deliberately left
+      // untouched here rather than approximated, and simply catch up on
+      // the next real loadOverview() (date change, refresh, or reopening
+      // the Overview tab).
+      if (lastOverviewReport) {
+        const orderTotal = order.items.reduce((sum, it) => sum + lineTotal(it), 0);
+        lastOverviewReport.summary.ordersPlaced += 1;
+        lastOverviewReport.summary.liveRevenue += orderTotal;
+        renderStatGrid(lastOverviewReport);
+      }
+    });
+
+    socket.off('order_voided').on('order_voided', ({ orderId }) => {
+      if (currentDate !== todayISO()) return;
+      const order = currentOrders.find((o) => o.id === orderId);
+      if (order) {
+        order.status = 'VOIDED';
+        order.isVoided = true;
+        renderOrdersTable();
+      }
+
+      // Same instant-patch approach as new_order above — only when we
+      // actually have this order's items on hand (it's today's order and
+      // the Orders tab has already loaded it) do we know its revenue to
+      // subtract; otherwise this is skipped and picked up by the next
+      // real refresh rather than guessed at.
+      if (lastOverviewReport && order) {
+        const orderTotal = order.items.reduce((sum, it) => sum + lineTotal(it), 0);
+        lastOverviewReport.summary.ordersVoided += 1;
+        lastOverviewReport.summary.liveRevenue -= orderTotal;
+        renderStatGrid(lastOverviewReport);
+      }
     });
 
     socket.off('status_updated').on('status_updated', ({ orderId, kitchenStatus, barStatus, status }) => {

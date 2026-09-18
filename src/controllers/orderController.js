@@ -226,16 +226,27 @@ async function updateOrderStatus(req, res) {
       status: updated.status,
     };
 
-    // Notify only the waiter who owns this order, plus managers watching everything
-    getIO().to(`waiter_${updated.waiterId}`).emit('status_updated', payload);
+    const justCompleted = existing.status !== 'COMPLETED' && updated.status === 'COMPLETED';
+
+    // Managers always get the granular per-station payload — the
+    // dashboard patches its own state off of it (see admin.js).
     getIO().to('manager_channel').emit('status_updated', payload);
+
+    // The waiter gets exactly ONE event per update, never two for the
+    // same underlying change: table_ready_for_checkout below is the
+    // single, final signal once every station is done — emitting the
+    // interim per-station status_updated to the waiter room AS WELL, on
+    // that same completing update, was firing two toasts back-to-back
+    // for what is, from the waiter's point of view, one event.
+    if (!justCompleted) {
+      getIO().to(`waiter_${updated.waiterId}`).emit('status_updated', payload);
+    }
 
     // The order just became fully done across every station it needed —
     // hand it to the Cashier and let the waiter know the table can be
-    // checked out. (existing.status !== 'COMPLETED' guards this so it
-    // only fires once, on the actual transition, not on every later
-    // no-op re-save.)
-    if (existing.status !== 'COMPLETED' && updated.status === 'COMPLETED') {
+    // checked out. (justCompleted guards this so it only fires once, on
+    // the actual transition, not on every later no-op re-save.)
+    if (justCompleted) {
       const readyPayload = { orderId: updated.id, tableId: updated.tableId, tableLabel: updated.table.label };
       getIO().to(`waiter_${updated.waiterId}`).emit('table_ready_for_checkout', readyPayload);
       getIO().to('cashier_channel').emit('table_ready_for_checkout', readyPayload);
@@ -275,6 +286,9 @@ async function voidOrder(req, res) {
     getIO().to('barista_channel').emit('order_voided', { orderId: id });
     getIO().to('chef_channel').emit('order_voided', { orderId: id });
     getIO().to(`waiter_${existing.waiterId}`).emit('order_voided', { orderId: id });
+    // Managers weren't in this list before — the dashboard needs it to
+    // patch its Overview stats and Orders table live (see admin.js).
+    getIO().to('manager_channel').emit('order_voided', { orderId: id });
 
     return res.json(voided);
   } catch (err) {

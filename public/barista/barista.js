@@ -207,7 +207,16 @@
   });
 
   // ---------------- Status actions ----------------
+  // Guards against a status PATCH being sent twice for the same ticket —
+  // e.g. a very fast double-tap landing before the optimistic re-render
+  // below has swapped the button out.
+  const inFlightStatusUpdates = new Set();
+
   async function startPreparing(ticket) {
+    if (inFlightStatusUpdates.has(ticket.id)) return;
+    inFlightStatusUpdates.add(ticket.id);
+
+    const previousBarStatus = ticket.barStatus;
     ticket.barStatus = 'IN_PROGRESS';
     render();
     try {
@@ -217,10 +226,21 @@
       });
     } catch (err) {
       console.error('Failed to update status:', err);
+      // Roll back the optimistic change so the button reappears (in its
+      // original, clickable state) rather than silently drifting out of
+      // sync with what the server actually has.
+      ticket.barStatus = previousBarStatus;
+      render();
+      showFailureToast('Failed to start preparing this ticket — try again.');
+    } finally {
+      inFlightStatusUpdates.delete(ticket.id);
     }
   }
 
   async function markComplete(ticket) {
+    if (inFlightStatusUpdates.has(ticket.id)) return;
+    inFlightStatusUpdates.add(ticket.id);
+
     activeTickets = activeTickets.filter((t) => t.id !== ticket.id);
     completedTickets.unshift({ ...ticket, barStatus: 'COMPLETED', completedAt: new Date().toISOString() });
     completedTickets = completedTickets.slice(0, 30);
@@ -232,7 +252,34 @@
       });
     } catch (err) {
       console.error('Failed to update status:', err);
+      // Roll back: move it back into the active queue so the "Mark
+      // Complete" button reappears instead of vanishing into a
+      // completed-looking state the server never actually confirmed.
+      completedTickets = completedTickets.filter((t) => t.id !== ticket.id);
+      activeTickets.unshift(ticket);
+      render();
+      showFailureToast('Failed to mark this ticket complete — try again.');
+    } finally {
+      inFlightStatusUpdates.delete(ticket.id);
     }
+  }
+
+  // Minimal inline toast for a failed status update — reuses the same
+  // #toast element/animation the completed-history view doesn't have its
+  // own copy of, so this stays self-contained rather than depending on
+  // another screen's toast helper.
+  function showFailureToast(message) {
+    let toast = document.getElementById('toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'toast';
+      toast.className = 'toast error hidden';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.remove('hidden');
+    clearTimeout(showFailureToast._t);
+    showFailureToast._t = setTimeout(() => toast.classList.add('hidden'), 3500);
   }
 
   // ---------------- Elapsed time ----------------
@@ -270,12 +317,19 @@
 
     activeView.querySelectorAll('[data-action="start"]').forEach((btn) => {
       btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        btn.disabled = true; // belt-and-suspenders on top of inFlightStatusUpdates —
+                              // this button element itself is normally about to be
+                              // replaced by the next render() anyway, but a slow/janky
+                              // browser tick is exactly the gap a double-tap could land in
         const ticket = activeTickets.find((t) => t.id === btn.dataset.id);
         if (ticket) startPreparing(ticket);
       });
     });
     activeView.querySelectorAll('[data-action="complete"]').forEach((btn) => {
       btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        btn.disabled = true;
         const ticket = activeTickets.find((t) => t.id === btn.dataset.id);
         if (ticket) markComplete(ticket);
       });
