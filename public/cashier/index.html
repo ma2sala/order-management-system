@@ -85,15 +85,33 @@
       <div id="billBody"></div>
 
       <div class="pay-controls">
-        <label for="paymentMethodSelect">Payment method</label>
-        <select id="paymentMethodSelect">
-          <option value="CASH">💵 Cash</option>
-          <option value="CARD">💳 Card</option>
-          <option value="TELEBIRR">📱 Telebirr</option>
-          <option value="CBE">🏦 CBE (Commercial Bank of Ethiopia)</option>
-          <option value="BOA">🏦 BOA (Bank of Abyssinia)</option>
-          <option value="MOBILE_MONEY">📱 Other Mobile Money</option>
-        </select>
+        <label>Payment method</label>
+        <div id="paymentMethodGrid" class="payment-method-grid">
+          <button type="button" class="payment-tile active" data-method="CASH">
+            <span class="payment-tile-icon">💵</span>
+            <span class="payment-tile-label">Cash</span>
+          </button>
+          <button type="button" class="payment-tile" data-method="CARD">
+            <span class="payment-tile-icon">💳</span>
+            <span class="payment-tile-label">Card</span>
+          </button>
+          <button type="button" class="payment-tile" data-method="TELEBIRR">
+            <img src="images/telebirr.png" alt="" class="payment-tile-logo" />
+            <span class="payment-tile-label">Telebirr</span>
+          </button>
+          <button type="button" class="payment-tile" data-method="CBE">
+            <img src="images/cbe.jpg" alt="" class="payment-tile-logo" />
+            <span class="payment-tile-label">CBE</span>
+          </button>
+          <button type="button" class="payment-tile" data-method="BOA">
+            <img src="images/boa.png" alt="" class="payment-tile-logo" />
+            <span class="payment-tile-label">BOA</span>
+          </button>
+          <button type="button" class="payment-tile" data-method="MOBILE_MONEY">
+            <span class="payment-tile-icon">📱</span>
+            <span class="payment-tile-label">Other Mobile Money</span>
+          </button>
+        </div>
 
         <label for="paymentScreenshotInput">Payment screenshot (optional)</label>
         <input type="file" id="paymentScreenshotInput" accept="image/*" />

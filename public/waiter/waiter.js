@@ -288,7 +288,12 @@
       if (order) order.status = status;
       renderOrders();
 
-      if (status === 'COMPLETED') playCompletionChime();
+      if (status === 'COMPLETED') {
+        playCompletionChime();
+        const tableLabel = order ? order.table.label : 'your table';
+        pushNotification(`Order for ${tableLabel} is ready!`);
+        return;
+      }
 
       const meta = STATUS_META[status] || {};
       const label = order ? `Ticket for ${order.table.label}` : 'Your order';

@@ -13,6 +13,7 @@
   const logoutBtn = document.getElementById('logoutBtn');
   const refreshBtn = document.getElementById('refreshBtn');
   const dateDisplay = document.getElementById('dateDisplay');
+  const headerDateInput = document.getElementById('headerDateInput');
 
   const toggleBtns = document.querySelectorAll('.toggle-btn');
   const billsView = document.getElementById('billsView');
@@ -26,7 +27,8 @@
   const billModalTitle = document.getElementById('billModalTitle');
   const billBody = document.getElementById('billBody');
   const billCloseBtn = document.getElementById('billCloseBtn');
-  const paymentMethodSelect = document.getElementById('paymentMethodSelect');
+  const paymentMethodGrid = document.getElementById('paymentMethodGrid');
+  let selectedPaymentMethod = 'CASH';
   const payError = document.getElementById('payError');
   const markPaidBtn = document.getElementById('markPaidBtn');
   const paymentScreenshotInput = document.getElementById('paymentScreenshotInput');
@@ -148,6 +150,18 @@
     if (!historyView.classList.contains('hidden')) loadHistory();
   });
 
+  // ---------------- Header date filter ----------------
+  // One date picker in the header drives both tabs: Open Bills (cumulative
+  // — every unpaid bill on or before this date) and Payment History (that
+  // specific day's paid orders). Keeps historyDateInput in sync so the
+  // History tab's own picker reflects the same date without needing a
+  // second, separate selection.
+  headerDateInput.addEventListener('change', () => {
+    historyDateInput.value = headerDateInput.value;
+    loadUnpaidOrders();
+    if (!historyView.classList.contains('hidden')) loadHistory();
+  });
+
   // ---------------- Tabs ----------------
   toggleBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -164,7 +178,8 @@
   // ---------------- Open Bills ----------------
   async function loadUnpaidOrders() {
     try {
-      unpaidOrders = await api('/api/payments/unpaid');
+      const date = headerDateInput.value || todayISO();
+      unpaidOrders = await api(`/api/payments/unpaid?date=${date}`);
       renderTablesGrid();
     } catch (err) {
       showToast(err.message || 'Failed to load open bills', true);
@@ -218,8 +233,21 @@
     screenshotPreviewWrap.classList.add('hidden');
   });
 
+  // ---------------- Payment method tiles ----------------
+  paymentMethodGrid.addEventListener('click', (e) => {
+    const tile = e.target.closest('.payment-tile');
+    if (!tile) return;
+    selectedPaymentMethod = tile.dataset.method;
+    paymentMethodGrid.querySelectorAll('.payment-tile').forEach((t) => {
+      t.classList.toggle('active', t === tile);
+    });
+  });
+
   function resetPaymentForm() {
-    paymentMethodSelect.value = 'CASH';
+    selectedPaymentMethod = 'CASH';
+    paymentMethodGrid.querySelectorAll('.payment-tile').forEach((t) => {
+      t.classList.toggle('active', t.dataset.method === 'CASH');
+    });
     paymentScreenshotInput.value = '';
     screenshotPreviewWrap.classList.add('hidden');
     payError.textContent = '';
@@ -270,7 +298,7 @@
     if (!order) return;
 
     const orderIds = [order.id];
-    const paymentMethod = paymentMethodSelect.value;
+    const paymentMethod = selectedPaymentMethod;
 
     const formData = new FormData();
     formData.append('orderIds', JSON.stringify(orderIds));
@@ -296,9 +324,6 @@
   });
 
   // ---------------- Receipt printing ----------------
-  // Uses the browser's own print dialog — works with any printer already
-  // set up on this computer (including a receipt/thermal printer added as
-  // a system printer), rather than talking to hardware directly.
   const METHOD_LABELS = {
     CASH: 'Cash',
     CARD: 'Card',
@@ -351,7 +376,10 @@
   }
 
   // ---------------- Payment History ----------------
-  historyDateInput.addEventListener('change', loadHistory);
+  historyDateInput.addEventListener('change', () => {
+    headerDateInput.value = historyDateInput.value;
+    loadHistory();
+  });
 
   async function loadHistory() {
     const date = historyDateInput.value || todayISO();
@@ -411,6 +439,7 @@
   async function boot() {
     showApp();
     dateDisplay.textContent = new Date().toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+    headerDateInput.value = todayISO();
     historyDateInput.value = todayISO();
     await loadUnpaidOrders();
   }
