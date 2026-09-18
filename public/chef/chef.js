@@ -365,15 +365,18 @@
   // ---------------- Ticket details modal ----------------
   const TEMPERATURE_LABELS = { HOT: 'Hot', COLD: 'Cold', NORMAL: 'Normal', NORMAL_WITH_ICE: 'Normal + Ice' };
 
+  // One line per modification, matching how a kitchen ticket actually
+  // needs to be scanned at a glance — not a single comma-joined blob.
   function itemCustomizationLines(item) {
     const lines = [];
-    if (item.temperature) lines.push(TEMPERATURE_LABELS[item.temperature] || item.temperature);
-    if (item.removedIngredients && item.removedIngredients.length > 0) {
-      lines.push(`No ${item.removedIngredients.join(', ')}`);
+    if (item.temperature) {
+      lines.push(`[${TEMPERATURE_LABELS[item.temperature] || item.temperature}]`);
     }
-    if (item.selectedExtras && item.selectedExtras.length > 0) {
-      lines.push(`+ ${item.selectedExtras.map((e) => e.name).join(', ')}`);
-    }
+    (item.removedIngredients || []).forEach((ing) => lines.push(`- No ${ing}`));
+    (item.selectedExtras || []).forEach((ex) => {
+      const priceText = typeof ex.price === 'number' ? ` (+$${ex.price.toFixed(2)})` : '';
+      lines.push(`+ ${ex.name}${priceText}`);
+    });
     if (item.notes) lines.push(`Note: ${item.notes}`);
     return lines;
   }
@@ -397,7 +400,7 @@
             </div>
             ${
               lines.length > 0
-                ? `<div class="details-item-custom">${lines.map((l) => escapeHtml(l)).join(' · ')}</div>`
+                ? lines.map((l) => `<div class="details-item-custom">${escapeHtml(l)}</div>`).join('')
                 : '<div class="details-item-custom muted-note">No customizations</div>'
             }
           </div>`;

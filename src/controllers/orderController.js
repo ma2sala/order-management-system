@@ -114,12 +114,39 @@ async function createOrder(req, res) {
         kitchenStatus: hasKitchen ? 'PENDING' : null,
         barStatus: hasBar ? 'PENDING' : null,
         items: {
-          create: items.map((i) => ({
-            menuItemId: i.menuItemId,
-            quantity: i.quantity || 1,
-            notes: i.notes || null,
-            unitPrice: priceMap[i.menuItemId],
-          })),
+          // Customizations sent by the waiter — temperature,
+          // removedIngredients, and extraNames — were being silently
+          // dropped here before: only menuItemId/quantity/notes/unitPrice
+          // ever made it into the create() call, so nothing was ever
+          // saved to the database regardless of what the customize
+          // modal collected. This is why every KDS "View Details" modal
+          // showed "No customizations" even for genuinely modified
+          // items — there was truly nothing there to show.
+          create: items.map((i) => {
+            const menuItem = menuItemMap[i.menuItemId];
+            const extraNames = Array.isArray(i.extraNames) ? i.extraNames : [];
+            // Resolve each requested extra's name against this menu
+            // item's own extraOptions to snapshot its price at order
+            // time (matches the schema's documented shape for
+            // selectedExtras) — a bare name string isn't enough on its
+            // own to know what it cost when this order was placed.
+            const selectedExtras = extraNames
+              .map((name) => {
+                const opt = (menuItem.extraOptions || []).find((e) => e.name === name);
+                return opt ? { name: opt.name, price: opt.price } : null;
+              })
+              .filter(Boolean);
+
+            return {
+              menuItemId: i.menuItemId,
+              quantity: i.quantity || 1,
+              notes: i.notes || null,
+              unitPrice: priceMap[i.menuItemId],
+              temperature: i.temperature || null,
+              removedIngredients: Array.isArray(i.removedIngredients) ? i.removedIngredients : [],
+              selectedExtras: selectedExtras.length > 0 ? selectedExtras : null,
+            };
+          }),
         },
         statusLogs: {
           create: { fromStatus: null, toStatus: 'PENDING', changedById: waiterId },
