@@ -1134,6 +1134,36 @@ table.grid tr:last-child td {
     padding-top: 10px;
     font-size: 14px;
   }
+  #itemsSummaryPrintArea .category-type-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border: 1px solid #000;
+  }
+  #itemsSummaryPrintArea .category-type-badge.drinks {
+    background: #dbeafe;
+    color: #1d4ed8;
+    border-color: #1d4ed8;
+  }
+  #itemsSummaryPrintArea .category-type-badge.meals {
+    background: #ffe4d6;
+    color: #c2410c;
+    border-color: #c2410c;
+  }
+  #itemsSummaryPrintArea .category-type-badge.snacks {
+    background: #fef3c7;
+    color: #b45309;
+    border-color: #b45309;
+  }
+  #itemsSummaryPrintArea .category-type-badge.unknown {
+    background: #f1f1f1;
+    color: #555;
+    border-color: #999;
+  }
 }
 
 .lightbox-fallback {
@@ -1184,4 +1214,40 @@ table.grid tr:last-child td {
 
 .print-summary-btn:active {
   transform: scale(0.92);
+}
+
+/* ---------------- CATEGORY column badges (Items Ordered table) ---------------- */
+.category-type-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.category-type-badge.drinks {
+  background: rgba(78, 161, 242, 0.18);
+  color: var(--prog);
+  border: 1px solid var(--prog);
+}
+
+.category-type-badge.meals {
+  background: rgba(255, 90, 54, 0.18);
+  color: var(--signal);
+  border: 1px solid var(--signal);
+}
+
+.category-type-badge.snacks {
+  background: rgba(242, 184, 75, 0.18);
+  color: var(--wait);
+  border: 1px solid var(--wait);
+}
+
+.category-type-badge.unknown {
+  background: var(--glass-fill-light);
+  color: var(--text-muted);
+  border: 1px solid var(--glass-border);
 }

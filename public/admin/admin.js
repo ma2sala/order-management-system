@@ -20,6 +20,7 @@
   let lastItemsOrdered = []; // most recent report.itemsOrdered, re-rendered when the category filter changes
   let itemCategoryMap = new Map(); // menu item name -> 'drinks' | 'food' | null, built from currentOrders
   let itemMidCategoryMap = new Map(); // menu item name -> 'Alcohol' | 'Hot Drinks' | 'Juices & Smoothies' | 'Soft Drinks' | null
+  let itemTopCategoryMap = new Map(); // menu item name -> 'Drinks' | 'Meals' | 'Snacks' | null — the real top-level category name, for the CATEGORY column badge
 
   // ---------------- Stock (backed by /api/stock — synced across every login) ----------------
   let stockItems = [];
@@ -80,6 +81,16 @@
   function categoryTagHtml(mid) {
     const t = categoryTagFor(mid);
     return t ? ` <span class="category-tag ${t.cls}">${t.label}</span>` : '';
+  }
+
+  // The CATEGORY column's badge — Drink/Meal/Snack, one level up from the
+  // Alcohol/Hot Drinks/etc. sub-tag above. 'top' is the real category
+  // name (from itemTopCategoryMap), e.g. 'Drinks', 'Meals', 'Snacks'.
+  function categoryTypeBadgeHtml(top) {
+    if (top === 'Drinks') return '<span class="category-type-badge drinks">Drink</span>';
+    if (top === 'Meals') return '<span class="category-type-badge meals">Meal</span>';
+    if (top === 'Snacks') return '<span class="category-type-badge snacks">Snack</span>';
+    return '<span class="category-type-badge unknown">—</span>';
   }
 
   const STATUS_META = {
@@ -565,7 +576,7 @@
 
     itemsTable.innerHTML = `
       <table class="grid">
-        <thead><tr><th>${topSellersMode ? '#' : ''}Item</th><th>Quantity</th><th>Revenue</th></tr></thead>
+        <thead><tr><th>${topSellersMode ? '#' : ''}Item</th><th>Category</th><th>Quantity</th><th>Revenue</th></tr></thead>
         <tbody>
           ${filtered
             .map((i, idx) => {
@@ -577,6 +588,7 @@
               return `
             <tr>
               <td>${rankHtml}${escapeHtml(i.name)}${categoryTagHtml(itemMidCategoryMap.get(i.name))}</td>
+              <td>${categoryTypeBadgeHtml(itemTopCategoryMap.get(i.name))}</td>
               <td class="mono-cell">${i.quantity}</td>
               <td class="mono-cell">$${i.revenue.toFixed(2)}</td>
             </tr>`;
@@ -584,6 +596,7 @@
             .join('')}
           <tr class="total-row">
             <td><strong>TOTAL</strong></td>
+            <td></td>
             <td class="mono-cell"><strong>${totalQuantity}</strong></td>
             <td class="mono-cell">
               <div class="total-row-revenue-cell">
@@ -614,6 +627,7 @@
         (i) => `
         <tr>
           <td>${escapeHtml(i.name)}</td>
+          <td>${categoryTypeBadgeHtml(itemTopCategoryMap.get(i.name))}</td>
           <td class="mono-cell">${i.quantity}</td>
           <td class="mono-cell">$${i.revenue.toFixed(2)}</td>
         </tr>`
@@ -624,11 +638,12 @@
       <h1>Sales Summary Report — ${periodLabel} (${escapeHtml(rangeLabel)})</h1>
       <p class="summary-print-meta">Category: ${escapeHtml(categoryLabel)} &nbsp;·&nbsp; Generated ${new Date().toLocaleString()}</p>
       <table>
-        <thead><tr><th>Item</th><th>Quantity</th><th>Revenue</th></tr></thead>
+        <thead><tr><th>Item</th><th>Category</th><th>Quantity</th><th>Revenue</th></tr></thead>
         <tbody>
           ${rowsHtml}
           <tr class="summary-print-total">
             <td><strong>TOTAL</strong></td>
+            <td></td>
             <td class="mono-cell"><strong>${totalQuantity}</strong></td>
             <td class="mono-cell"><strong>$${totalRevenue.toFixed(2)}</strong></td>
           </tr>
@@ -682,9 +697,11 @@
   function rebuildItemCategoryMap() {
     itemCategoryMap = new Map();
     itemMidCategoryMap = new Map();
+    itemTopCategoryMap = new Map();
     menuItemsAdmin.forEach((m) => {
       itemCategoryMap.set(m.name, categoryBucket(m));
       itemMidCategoryMap.set(m.name, midCategoryName(m));
+      itemTopCategoryMap.set(m.name, topCategoryName(m));
     });
   }
 
@@ -1806,7 +1823,16 @@
     dateInput.value = currentDate;
     connectSocket();
     loadStock();
-    loadMenuItemsAdmin(); // also builds the category maps the Items panel needs
+    // Awaited on its own, BEFORE loadItemsPanel() — it builds
+    // itemCategoryMap/itemMidCategoryMap (see rebuildItemCategoryMap())
+    // that the Items Ordered table's category filter reads. Firing it
+    // in parallel inside the Promise.all below (as this used to do) was
+    // a real race: whichever request happened to resolve first won, so
+    // clicking "Drinks" or "Food" before this fetch finished silently
+    // matched nothing — every item's category lookup returned undefined
+    // — while "All" always looked fine since it skips the lookup
+    // entirely. Awaiting it here first removes the race outright.
+    await loadMenuItemsAdmin();
     await Promise.all([loadOverview(), loadOrders(), loadItemsPanel()]);
   }
 
