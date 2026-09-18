@@ -196,17 +196,42 @@ body {
   box-shadow: var(--glass-shadow);
   border-radius: var(--glass-radius);
   padding: 14px 16px;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 100px 120px 80px 100px;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
-  flex-wrap: wrap;
 }
 
 .history-row .info {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0; /* lets the long ticket/meta text truncate instead of forcing the grid wider */
+  overflow: hidden;
+}
+
+.history-row .method-cell {
+  display: flex;
+  justify-content: center;
+}
+
+.history-row .amount-cell {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.history-row .view-cell {
+  display: flex;
+  justify-content: center;
+}
+
+.history-row .view-cell .view-screenshot:disabled {
+  pointer-events: none;
+}
+
+.history-row .reprint-cell {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .history-row .ticket-line {

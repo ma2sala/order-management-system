@@ -399,19 +399,32 @@
       return;
     }
 
+    // Fixed grid: 5 columns, always present, so a row without a
+    // screenshot (View button) never shifts Reprint (or anything else)
+    // out of alignment with the rows around it — see .history-row in
+    // cashier.css for the actual column widths.
     historyList.innerHTML = paid
       .map((o) => {
         const total = orderTotal(o);
+        const hasScreenshot = Boolean(o.paymentScreenshotUrl);
         return `
         <div class="history-row" data-id="${o.id}">
           <div class="info">
             <span class="ticket-line">#${o.id.slice(0, 6).toUpperCase()} · Table ${escapeHtml(o.table.label)}</span>
             <span class="meta-line">${escapeHtml(o.waiter.name)} · paid by ${escapeHtml((o.cashier && o.cashier.name) || '—')} · ${new Date(o.paidAt).toLocaleTimeString()}</span>
           </div>
-          <span class="method-tag">${METHOD_LABELS[o.paymentMethod] || o.paymentMethod}</span>
-          <span class="amount mono">$${total.toFixed(2)}</span>
-          ${o.paymentScreenshotUrl ? `<button type="button" class="small-btn view-screenshot" data-url="${escapeHtml(o.paymentScreenshotUrl)}">📷 View</button>` : ''}
-          <button type="button" class="small-btn reprint" data-id="${o.id}">🖨 Reprint</button>
+          <div class="method-cell">
+            <span class="method-tag">${METHOD_LABELS[o.paymentMethod] || o.paymentMethod}</span>
+          </div>
+          <div class="amount-cell">
+            <span class="amount mono">$${total.toFixed(2)}</span>
+          </div>
+          <div class="view-cell">
+            <button type="button" class="small-btn view-screenshot" data-url="${escapeHtml(o.paymentScreenshotUrl || '')}" ${hasScreenshot ? '' : 'disabled style="visibility:hidden"'}>📷 View</button>
+          </div>
+          <div class="reprint-cell">
+            <button type="button" class="small-btn reprint" data-id="${o.id}">🖨 Reprint</button>
+          </div>
         </div>`;
       })
       .join('');

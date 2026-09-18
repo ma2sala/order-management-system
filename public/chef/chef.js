@@ -48,6 +48,11 @@
   const historyBtn = document.getElementById('historyBtn');
   const logoutBtn = document.getElementById('logoutBtn');
 
+  const detailsModal = document.getElementById('detailsModal');
+  const detailsModalTitle = document.getElementById('detailsModalTitle');
+  const detailsBody = document.getElementById('detailsBody');
+  const detailsCloseBtn = document.getElementById('detailsCloseBtn');
+
   const toggleBtns = document.querySelectorAll('.toggle-btn');
   const activeView = document.getElementById('activeView');
   const completedView = document.getElementById('completedView');
@@ -349,7 +354,64 @@
         if (ticket) markComplete(ticket);
       });
     });
+    activeView.querySelectorAll('[data-action="details"]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const ticket = activeTickets.find((t) => t.id === btn.dataset.id);
+        if (ticket) openDetailsModal(ticket);
+      });
+    });
   }
+
+  // ---------------- Ticket details modal ----------------
+  const TEMPERATURE_LABELS = { HOT: 'Hot', COLD: 'Cold', NORMAL: 'Normal', NORMAL_WITH_ICE: 'Normal + Ice' };
+
+  function itemCustomizationLines(item) {
+    const lines = [];
+    if (item.temperature) lines.push(TEMPERATURE_LABELS[item.temperature] || item.temperature);
+    if (item.removedIngredients && item.removedIngredients.length > 0) {
+      lines.push(`No ${item.removedIngredients.join(', ')}`);
+    }
+    if (item.selectedExtras && item.selectedExtras.length > 0) {
+      lines.push(`+ ${item.selectedExtras.map((e) => e.name).join(', ')}`);
+    }
+    if (item.notes) lines.push(`Note: ${item.notes}`);
+    return lines;
+  }
+
+  function openDetailsModal(ticket) {
+    detailsModalTitle.textContent = `#${ticket.ticketNo || ticket.id.slice(0, 5).toUpperCase()} — Table ${ticket.table.label}`;
+
+    // ticket.items here is already narrowed to kitchen items only (see
+    // narrowToKitchen() near the top of this file), so no extra filter
+    // is needed the way barista.js needs one for its own station.
+    detailsBody.innerHTML = `
+      <div class="details-row"><span class="details-label">Waiter</span><span>${escapeHtml(ticket.waiter.name)}</span></div>
+      <div class="details-divider"></div>
+      ${ticket.items
+        .map((it) => {
+          const lines = itemCustomizationLines(it);
+          return `
+          <div class="details-item">
+            <div class="details-item-top">
+              <span>${it.quantity}× ${escapeHtml(it.menuItem.name)}</span>
+            </div>
+            ${
+              lines.length > 0
+                ? `<div class="details-item-custom">${lines.map((l) => escapeHtml(l)).join(' · ')}</div>`
+                : '<div class="details-item-custom muted-note">No customizations</div>'
+            }
+          </div>`;
+        })
+        .join('')}
+    `;
+
+    detailsModal.classList.remove('hidden');
+  }
+
+  detailsCloseBtn.addEventListener('click', () => detailsModal.classList.add('hidden'));
+  detailsModal.addEventListener('click', (e) => {
+    if (e.target === detailsModal) detailsModal.classList.add('hidden');
+  });
 
   function ticketCardHtml(ticket) {
     const isPending = ticket.kitchenStatus === 'PENDING';
@@ -388,11 +450,14 @@
           ${overdue ? '⚠️' : ''} ${elapsedText}
         </div>
 
-        ${
-          isPending
-            ? `<button class="action-btn start" data-action="start" data-id="${ticket.id}">👨‍🍳 Start Preparing</button>`
-            : `<button class="action-btn complete" data-action="complete" data-id="${ticket.id}">✅ Mark Complete</button>`
-        }
+        <div class="ticket-actions-row">
+          ${
+            isPending
+              ? `<button class="action-btn start" data-action="start" data-id="${ticket.id}">👨‍🍳 Start Preparing</button>`
+              : `<button class="action-btn complete" data-action="complete" data-id="${ticket.id}">✅ Mark Complete</button>`
+          }
+          <button class="action-btn details" data-action="details" data-id="${ticket.id}" title="View Details">📋</button>
+        </div>
       </div>`;
   }
 

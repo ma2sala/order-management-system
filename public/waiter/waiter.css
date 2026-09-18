@@ -265,7 +265,9 @@ body {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
-  padding: 8px 16px 24px;
+  /* Extra bottom padding so the now-fixed .checkout-bar (see above)
+     never overlaps the last row of items. */
+  padding: 8px 16px 90px;
 }
 
 .menu-card {
@@ -964,8 +966,17 @@ body {
   color: var(--paper, #f3ecd8);
 }
 .checkout-bar {
-  position: sticky;
+  /* Fixed (not sticky) so it's always pinned to the actual viewport
+     bottom regardless of how tall the page content is — sticky only
+     sticks within its own container's height, so on a short menu (few
+     items, e.g. just 2-3 Meals) it was sitting right after the content
+     with a visible gap of background below it instead of reaching the
+     real bottom edge. */
+  position: fixed;
   bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -975,7 +986,6 @@ body {
   -webkit-backdrop-filter: var(--glass-blur);
   border-top: 1px solid var(--glass-border);
   padding: 14px 16px;
-  margin-top: 16px;
   border-radius: 12px 12px 0 0;
 }
 .checkout-summary {
@@ -1141,13 +1151,4 @@ body {
     font-size: 16px;
   }
 
-  .checkout-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    margin: 0;
-    border-radius: 0;
-  }
 }

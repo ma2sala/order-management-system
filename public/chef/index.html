@@ -70,6 +70,17 @@
 
   </div>
 
+  <!-- ---------------- Ticket details modal (notes / customizations) ---------------- -->
+  <div id="detailsModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header-row">
+        <h2 class="modal-title" id="detailsModalTitle">Ticket Details</h2>
+        <button type="button" id="detailsCloseBtn" class="icon-btn" aria-label="Close">✕</button>
+      </div>
+      <div id="detailsBody"></div>
+    </div>
+  </div>
+
 <script src="/socket.io/socket.io.js"></script>
 <script src="chef.js"></script>
 </body>

@@ -1183,7 +1183,13 @@ table.grid tr:last-child td {
 .total-row-revenue-cell {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  /* space-between (not flex-end) — the $ amount sits at the natural
+     left edge of this cell, lining up under the REVENUE column header
+     and the amounts in the rows above it, while ONLY the print button
+     gets pushed out to the far right corner. flex-end previously
+     bundled both together at the right edge, disconnecting the total
+     figure from its own column. */
+  justify-content: space-between;
   gap: 10px;
 }
 
