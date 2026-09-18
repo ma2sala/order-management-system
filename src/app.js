@@ -18,6 +18,13 @@ function createApp() {
   app.use(cors());
   app.use(express.json());
 
+  // Silences the browser's automatic GET /favicon.ico request (every
+  // browser makes this on its own, regardless of whether any page links
+  // a favicon) that would otherwise 404 and clutter the console/logs on
+  // every screen. 204 No Content is the correct "nothing here, and
+  // that's fine" response — no fake/placeholder icon file needed.
+  app.get('/favicon.ico', (req, res) => res.status(204).end());
+
   // Serve the plain HTML/CSS/JS frontends
   // http://localhost:PORT/waiter/  and  http://localhost:PORT/barista/
   app.use(express.static(path.join(__dirname, '..', 'public')));

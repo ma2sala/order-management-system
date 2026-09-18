@@ -32,6 +32,8 @@
     }
   }
   document.addEventListener('click', unlockAudioOnce, { once: true });
+  document.addEventListener('touchstart', unlockAudioOnce, { once: true });
+  document.addEventListener('keydown', unlockAudioOnce, { once: true });
 
   // ---------------- DOM refs ----------------
   const loginScreen = document.getElementById('loginScreen');
@@ -326,39 +328,99 @@
     renderCompleted(barCompleted);
   }
 
-  function renderActive(barActive) {
-    if (barActive.length === 0) {
-      activeView.innerHTML = '<div class="empty-state">No active tickets. New orders will flash in here.</div>';
+  // ---------------- In-place card diffing (no full innerHTML wipe) ----------------
+  // Previously every render() — including the once-a-second tick that
+  // just updates elapsed-time text — replaced the ENTIRE container's
+  // innerHTML, tearing down and recreating every card even when nothing
+  // about it actually changed. That's what caused the visible flicker:
+  // a freshly-created DOM node replays its fadeInUp animation every
+  // time, even for a ticket that's been sitting there for 10 minutes.
+  // This keeps each ticket's own <div> alive across renders — matched by
+  // data-order-id — and only patches its content in place, so unrelated
+  // cards are never touched and a genuinely new/removed ticket is the
+  // only thing that actually mounts/unmounts.
+  function diffRenderTickets(container, tickets, cardHtmlFn, emptyMessage) {
+    const newIds = new Set(tickets.map((t) => t.id));
+
+    // Fade out and remove any card no longer in the list (completed
+    // elsewhere, voided, etc.) instead of yanking it out instantly.
+    Array.from(container.children).forEach((el) => {
+      if (el.dataset && el.dataset.orderId && !newIds.has(el.dataset.orderId)) {
+        el.classList.add('fade-out');
+        setTimeout(() => el.remove(), 250);
+      }
+    });
+
+    if (tickets.length === 0) {
+      if (container.children.length === 0) {
+        container.innerHTML = `<div class="empty-state">${emptyMessage}</div>`;
+      }
       return;
     }
 
-    activeView.innerHTML = barActive.map(ticketCardHtml).join('');
+    const staleEmpty = container.querySelector('.empty-state');
+    if (staleEmpty) staleEmpty.remove();
 
-    activeView.querySelectorAll('[data-action="start"]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        if (btn.disabled) return;
-        btn.disabled = true; // belt-and-suspenders on top of inFlightStatusUpdates —
-                              // this button element itself is normally about to be
-                              // replaced by the next render() anyway, but a slow/janky
-                              // browser tick is exactly the gap a double-tap could land in
-        const ticket = activeTickets.find((t) => t.id === btn.dataset.id);
-        if (ticket) startPreparing(ticket);
-      });
+    tickets.forEach((ticket) => {
+      const html = cardHtmlFn(ticket).trim();
+      const temp = document.createElement('div');
+      temp.innerHTML = html;
+      const freshEl = temp.firstElementChild;
+      freshEl.dataset.orderId = ticket.id;
+
+      const existingEl = container.querySelector(`[data-order-id="${ticket.id}"]`);
+      if (existingEl) {
+        // Skip the DOM write entirely if nothing actually changed —
+        // avoids even a same-content innerHTML reassignment.
+        if (existingEl.innerHTML !== freshEl.innerHTML) {
+          existingEl.innerHTML = freshEl.innerHTML;
+        }
+        if (existingEl.className !== freshEl.className) {
+          existingEl.className = freshEl.className;
+        }
+        const freshStyle = freshEl.getAttribute('style');
+        if (freshStyle && existingEl.getAttribute('style') !== freshStyle) {
+          existingEl.setAttribute('style', freshStyle);
+        }
+      } else {
+        freshEl.dataset.orderId = ticket.id;
+        container.prepend(freshEl); // newest first, matching how new_order unshifts locally
+      }
     });
-    activeView.querySelectorAll('[data-action="complete"]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        if (btn.disabled) return;
-        btn.disabled = true;
-        const ticket = activeTickets.find((t) => t.id === btn.dataset.id);
-        if (ticket) markComplete(ticket);
-      });
-    });
-    activeView.querySelectorAll('[data-action="details"]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const ticket = activeTickets.find((t) => t.id === btn.dataset.id);
-        if (ticket) openDetailsModal(ticket);
-      });
-    });
+  }
+
+  // Event delegation: ONE listener per container, attached once here —
+  // not re-attached after every render the way individual
+  // querySelectorAll(...).forEach(addEventListener) used to require,
+  // which is also what in-place diffing above needs (a card that gets
+  // patched via innerHTML, rather than replaced, would otherwise lose
+  // any listener bound directly to its old button element).
+  activeView.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn || btn.disabled) return;
+    const ticket = activeTickets.find((t) => t.id === btn.dataset.id);
+    if (!ticket) return;
+
+    if (btn.dataset.action === 'start') {
+      btn.disabled = true;
+      startPreparing(ticket);
+    } else if (btn.dataset.action === 'complete') {
+      btn.disabled = true;
+      markComplete(ticket);
+    } else if (btn.dataset.action === 'details') {
+      openDetailsModal(ticket);
+    }
+  });
+
+  completedView.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action="details"]');
+    if (!btn) return;
+    const ticket = completedTickets.find((t) => t.id === btn.dataset.id);
+    if (ticket) openDetailsModal(ticket);
+  });
+
+  function renderActive(barActive) {
+    diffRenderTickets(activeView, barActive, ticketCardHtml, 'No active tickets. New orders will flash in here.');
   }
 
   // ---------------- Ticket details modal ----------------
@@ -463,24 +525,23 @@
       </div>`;
   }
 
-  function renderCompleted(barCompleted) {
-    if (barCompleted.length === 0) {
-      completedView.innerHTML = '<div class="empty-state">Completed tickets will appear here.</div>';
-      return;
-    }
-    completedView.innerHTML = barCompleted
-      .map(
-        (t) => `
+  function completedCardHtml(t) {
+    return `
         <div class="completed-mini">
           <div class="top">
             <span class="mono" style="font-weight:700;color:var(--paper)">#${t.ticketNo || t.id.slice(0, 5).toUpperCase()}</span>
-            <span class="done-chip">✅ Done</span>
+            <div class="completed-mini-actions">
+              <span class="done-chip">✅ Done</span>
+              <button class="details-eye-btn" data-action="details" data-id="${t.id}" title="View Details" aria-label="View Details">👁</button>
+            </div>
           </div>
           <p>${escapeHtml(t.table.label)} · ${escapeHtml(t.waiter.name)}</p>
           <p>${t.items.filter((it) => it.station === 'bar').map((it) => `${it.quantity}× ${escapeHtml(it.menuItem.name)}`).join(', ')}</p>
-        </div>`
-      )
-      .join('');
+        </div>`;
+  }
+
+  function renderCompleted(barCompleted) {
+    diffRenderTickets(completedView, barCompleted, completedCardHtml, 'Completed tickets will appear here.');
   }
 
   function escapeHtml(str) {
