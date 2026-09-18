@@ -555,6 +555,14 @@
 
     const RANK_MEDALS = ['🥇', '🥈', '🥉'];
 
+    // Totals over exactly the same `filtered` list the rows above are
+    // built from — since that already reflects the current Daily/Weekly/
+    // Monthly period AND the current All/Drinks/Food category filter,
+    // this row updates automatically every time renderItemsTable() is
+    // re-run for either kind of toggle, with no separate sync needed.
+    const totalQuantity = filtered.reduce((sum, i) => sum + i.quantity, 0);
+    const totalRevenue = filtered.reduce((sum, i) => sum + i.revenue, 0);
+
     itemsTable.innerHTML = `
       <table class="grid">
         <thead><tr><th>${topSellersMode ? '#' : ''}Item</th><th>Quantity</th><th>Revenue</th></tr></thead>
@@ -574,6 +582,11 @@
             </tr>`;
             })
             .join('')}
+          <tr class="total-row">
+            <td><strong>TOTAL</strong></td>
+            <td class="mono-cell"><strong>${totalQuantity}</strong></td>
+            <td class="mono-cell"><strong>$${totalRevenue.toFixed(2)}</strong></td>
+          </tr>
         </tbody>
       </table>`;
   }
