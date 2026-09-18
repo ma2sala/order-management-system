@@ -47,6 +47,25 @@
   // hoping a gesture already happened, explicitly create/resume the
   // AudioContext on the very first tap/click anywhere, so it's unlocked
   // well before any notification needs to play.
+  // ---------------- Notification dedupe ----------------
+  // If the same event key arrives again within this window, it's treated
+  // as a duplicate delivery (e.g. a socket reconnect replaying an event,
+  // or — if it ever happens again — a doubled-up listener) and the toast
+  // /chime is skipped rather than firing twice for one real status change.
+  const NOTIFICATION_DEDUPE_MS = 5000;
+  const recentNotificationKeys = new Map(); // key -> timestamp it was last shown
+
+  function shouldNotify(key) {
+    const now = Date.now();
+    // Sweep anything stale so this map never grows unbounded over a long shift.
+    for (const [k, t] of recentNotificationKeys) {
+      if (now - t > NOTIFICATION_DEDUPE_MS) recentNotificationKeys.delete(k);
+    }
+    if (recentNotificationKeys.has(key)) return false;
+    recentNotificationKeys.set(key, now);
+    return true;
+  }
+
   function unlockAudioOnce() {
     try {
       if (!audioCtx) {
@@ -281,6 +300,16 @@
 
   // ---------------- Socket ----------------
   function connectSocket() {
+    // If a socket already exists (connectSocket() called more than once
+    // for any reason), fully tear it down first — otherwise the OLD
+    // connection keeps running in the background alongside the new one,
+    // and the server event lands on both, which no amount of
+    // socket.off()/.on() rebinding on the new socket can prevent (they're
+    // two entirely separate connections).
+    if (socket) {
+      socket.removeAllListeners();
+      socket.disconnect();
+    }
     socket = io({ auth: { token } });
 
     // Fired every time EITHER station (kitchen or bar) changes its own
@@ -290,27 +319,38 @@
     // the table as a whole may still be waiting on the other station);
     // the distinct, whole-table 'table_ready_for_checkout' event below
     // is what fires once both are done.
-    socket.on('status_updated', ({ orderId, station, stationStatus, status }) => {
+    //
+    // socket.off(...).on(...) here (rather than plain .on) means binding
+    // this twice — e.g. if boot() were ever accidentally called a second
+    // time — replaces the old listener instead of stacking a second one
+    // alongside it, which is what caused the same event to fire two (or
+    // more) notifications/chimes for a single status change.
+    socket.off('status_updated').on('status_updated', ({ orderId, station, stationStatus, status }) => {
       const order = myOrders.find((o) => o.id === orderId);
       if (order) order.status = status;
       renderOrders();
 
       if (stationStatus === 'COMPLETED') {
-        playCompletionChime();
         const tableLabel = order ? order.table.label : 'your table';
         const stationLabel = station === 'kitchen' ? 'Kitchen' : 'Bar';
-        pushNotification(`${stationLabel} ready for ${tableLabel}`);
+        if (shouldNotify(`station:${orderId}:${station}:${stationStatus}`)) {
+          playCompletionChime();
+          pushNotification(`${stationLabel} ready for ${tableLabel}`);
+        }
         return;
       }
 
       const meta = STATUS_META[stationStatus] || {};
       const label = order ? `Ticket for ${order.table.label}` : 'Your order';
-      pushNotification(`${label} — ${meta.label || stationStatus}`);
+      if (shouldNotify(`station:${orderId}:${station}:${stationStatus}`)) {
+        pushNotification(`${label} — ${meta.label || stationStatus}`);
+      }
     });
 
     // Fired once, only when every station a ticket needed has finished —
     // the table is genuinely ready to be paid out at the Cashier now.
-    socket.on('table_ready_for_checkout', ({ tableLabel }) => {
+    socket.off('table_ready_for_checkout').on('table_ready_for_checkout', ({ orderId, tableLabel }) => {
+      if (!shouldNotify(`checkout:${orderId}`)) return;
       playCompletionChime();
       pushNotification(`Order for ${tableLabel} is ready!`);
     });

@@ -1340,6 +1340,28 @@
       showToast(`Table ${tableLabel} ready for checkout`);
     });
 
+    // ---- Real-time Orders tab sync (no manual refresh needed) ----
+    // Both handlers only touch currentOrders/re-render when the Orders
+    // tab is actually showing "today" — a live event is always about
+    // something happening right now, so it has nothing to add to a past
+    // day the manager might currently be reviewing.
+    socket.off('new_order').on('new_order', (order) => {
+      if (currentDate !== todayISO()) return;
+      if (currentOrders.some((o) => o.id === order.id)) return; // already have it
+      currentOrders.unshift(order);
+      renderOrdersTable();
+    });
+
+    socket.off('status_updated').on('status_updated', ({ orderId, kitchenStatus, barStatus, status }) => {
+      if (currentDate !== todayISO()) return;
+      const order = currentOrders.find((o) => o.id === orderId);
+      if (!order) return;
+      order.kitchenStatus = kitchenStatus;
+      order.barStatus = barStatus;
+      order.status = status;
+      renderOrdersTable();
+    });
+
     socket.on('connect_error', (err) => {
       console.error('Socket connection error:', err.message);
     });

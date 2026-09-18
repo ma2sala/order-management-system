@@ -146,6 +146,9 @@ async function createOrder(req, res) {
     if (hasKitchen) {
       getIO().to('chef_channel').emit('new_order', order);
     }
+    // Managers watch everything — the dashboard's Orders tab live-inserts
+    // this without a page refresh (see admin.js's socket.on('new_order')).
+    getIO().to('manager_channel').emit('new_order', order);
 
     return res.status(201).json(order);
   } catch (err) {
