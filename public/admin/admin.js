@@ -90,6 +90,15 @@
 
   const TEMPERATURE_LABELS = { HOT: '🔥 Hot', COLD: '🥶 Cold', NORMAL: '🌡 Normal', NORMAL_WITH_ICE: '🧊 Normal + Ice' };
 
+  const PAYMENT_METHOD_LABELS = {
+    CASH: 'Cash',
+    CARD: 'Card',
+    TELEBIRR: 'Telebirr',
+    CBE: 'CBE',
+    BOA: 'BOA',
+    MOBILE_MONEY: 'Mobile Money',
+  };
+
   // ---------------- DOM refs ----------------
   const loginScreen = document.getElementById('loginScreen');
   const appScreen = document.getElementById('appScreen');
@@ -170,6 +179,16 @@
   const detailsModal = document.getElementById('detailsModal');
   const detailsBody = document.getElementById('detailsBody');
   const detailsCloseBtn = document.getElementById('detailsCloseBtn');
+
+  const receiptModal = document.getElementById('receiptModal');
+  const receiptBody = document.getElementById('receiptBody');
+  const receiptCloseBtn = document.getElementById('receiptCloseBtn');
+  const receiptPrintBtn = document.getElementById('receiptPrintBtn');
+  const receiptPrintArea = document.getElementById('receiptPrintArea');
+
+  const screenshotLightbox = document.getElementById('screenshotLightbox');
+  const lightboxImage = document.getElementById('lightboxImage');
+  const lightboxCloseBtn = document.getElementById('lightboxCloseBtn');
 
   const toastEl = document.getElementById('toast');
 
@@ -747,6 +766,18 @@
         <span class="mono">$${total.toFixed(2)}</span>
       </div>
 
+      <div class="details-actions-row">
+        <button type="button" class="details-action-btn" id="viewReceiptBtn">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg>
+          View Receipt
+        </button>
+        <button type="button" class="details-action-btn" id="viewScreenshotBtn" ${order.paymentScreenshotUrl ? '' : 'disabled title="No screenshot uploaded for this transaction"'}>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+          View Screenshot
+        </button>
+      </div>
+      ${!order.paymentScreenshotUrl ? '<p class="field-hint">No screenshot uploaded for this transaction.</p>' : ''}
+
       ${
         order.isVoided
           ? `
@@ -760,10 +791,102 @@
       }
     `;
 
+    document.getElementById('viewReceiptBtn').addEventListener('click', () => openReceiptModal(order));
+    const screenshotBtn = document.getElementById('viewScreenshotBtn');
+    if (order.paymentScreenshotUrl) {
+      screenshotBtn.addEventListener('click', () => openScreenshotLightbox(order.paymentScreenshotUrl));
+    }
+
     detailsModal.classList.remove('hidden');
   }
 
   detailsCloseBtn.addEventListener('click', () => detailsModal.classList.add('hidden'));
+
+  // ---------------- Receipt preview ----------------
+  function openReceiptModal(order) {
+    const total = order.items.reduce((s, i) => s + lineTotal(i), 0);
+    const methodLabel = order.isPaid ? (PAYMENT_METHOD_LABELS[order.paymentMethod] || order.paymentMethod) : 'Not yet paid';
+
+    receiptBody.innerHTML = `
+      <div class="details-top">
+        <div>
+          <p class="ticket-eyebrow">Ticket</p>
+          <p class="details-big mono">#${order.id.slice(0, 6).toUpperCase()}</p>
+        </div>
+        <div style="text-align:right">
+          <p class="ticket-eyebrow">Table</p>
+          <p class="details-big">${escapeHtml(order.table.label)}</p>
+        </div>
+      </div>
+
+      <div class="details-row"><span class="details-label">Date</span><span>${new Date(order.createdAt).toLocaleString()}</span></div>
+      <div class="details-row"><span class="details-label">Server</span><span>${escapeHtml(order.waiter.name)}</span></div>
+      <div class="details-row"><span class="details-label">Payment method</span><span>${escapeHtml(methodLabel)}</span></div>
+      ${order.isPaid && order.cashier ? `<div class="details-row"><span class="details-label">Cashier</span><span>${escapeHtml(order.cashier.name)}</span></div>` : ''}
+
+      <div class="details-divider"></div>
+
+      ${order.items
+        .map((it) => {
+          const summary = itemCustomizationSummary(it);
+          return `
+          <div class="details-item">
+            <div class="details-item-top">
+              <span>${it.quantity}× ${escapeHtml(it.menuItem.name)}</span>
+              <span class="mono">$${lineTotal(it).toFixed(2)}</span>
+            </div>
+            ${summary ? `<div class="details-item-custom">${escapeHtml(summary)}</div>` : ''}
+          </div>`;
+        })
+        .join('')}
+
+      <div class="details-divider"></div>
+
+      <div class="details-row details-total">
+        <span>Total</span>
+        <span class="mono">$${total.toFixed(2)}</span>
+      </div>
+    `;
+
+    receiptPrintBtn.onclick = () => printReceiptFor(order, methodLabel, total);
+
+    receiptModal.classList.remove('hidden');
+  }
+
+  receiptCloseBtn.addEventListener('click', () => receiptModal.classList.add('hidden'));
+
+  function printReceiptFor(order, methodLabel, total) {
+    const itemsHtml = order.items
+      .map((it) => `<div class="receipt-line"><span>${it.quantity}× ${escapeHtml(it.menuItem.name)}</span><span>$${lineTotal(it).toFixed(2)}</span></div>`)
+      .join('');
+
+    receiptPrintArea.innerHTML = `
+      <div class="receipt-center">
+        <div><strong>RECEIPT</strong></div>
+        <div>Table ${escapeHtml(order.table.label)}</div>
+        <div>${new Date(order.createdAt).toLocaleString()}</div>
+      </div>
+      <div class="receipt-divider"></div>
+      ${itemsHtml}
+      <div class="receipt-divider"></div>
+      <div class="receipt-line receipt-total"><span>TOTAL</span><span>$${total.toFixed(2)}</span></div>
+      <div class="receipt-line"><span>Server</span><span>${escapeHtml(order.waiter.name)}</span></div>
+      <div class="receipt-line"><span>Payment</span><span>${escapeHtml(methodLabel)}</span></div>
+      <div class="receipt-divider"></div>
+      <div class="receipt-center">Thank you!</div>
+    `;
+    window.print();
+  }
+
+  // ---------------- Payment screenshot lightbox ----------------
+  function openScreenshotLightbox(url) {
+    lightboxImage.src = url;
+    screenshotLightbox.classList.remove('hidden');
+  }
+  lightboxCloseBtn.addEventListener('click', () => screenshotLightbox.classList.add('hidden'));
+  screenshotLightbox.addEventListener('click', (e) => {
+    if (e.target === screenshotLightbox) screenshotLightbox.classList.add('hidden');
+  });
 
   function openVoidModal(orderId) {
     pendingVoidOrderId = orderId;

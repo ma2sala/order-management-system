@@ -332,7 +332,7 @@ async function listAllOrdersForDay(req, res) {
 
     const orders = await prisma.order.findMany({
       where: { createdAt: { gte: dayStart, lt: dayEnd } },
-      include: { items: { include: { menuItem: true } }, table: true, waiter: true, voidedBy: true },
+      include: { items: { include: { menuItem: true } }, table: true, waiter: true, voidedBy: true, cashier: true },
       orderBy: { createdAt: 'desc' },
     });
 

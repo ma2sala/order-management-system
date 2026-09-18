@@ -251,6 +251,29 @@
     </div>
   </div>
 
+  <!-- ---------------- Receipt preview modal ---------------- -->
+  <div id="receiptModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="details-header-row">
+        <h2 class="modal-title">Receipt</h2>
+        <button type="button" id="receiptCloseBtn" class="icon-btn" aria-label="Close">✕</button>
+      </div>
+      <div id="receiptBody"></div>
+      <div class="modal-actions">
+        <button type="button" id="receiptPrintBtn" class="secondary-btn">🖨 Print</button>
+      </div>
+    </div>
+  </div>
+  <div id="receiptPrintArea" class="receipt-print-area"></div>
+
+  <!-- ---------------- Payment screenshot lightbox ---------------- -->
+  <div id="screenshotLightbox" class="modal-overlay hidden">
+    <div class="lightbox-card">
+      <button type="button" id="lightboxCloseBtn" class="icon-btn lightbox-close" aria-label="Close">✕</button>
+      <img id="lightboxImage" alt="Payment screenshot" />
+    </div>
+  </div>
+
   <!-- ---------------- Add/Edit stock item modal ---------------- -->
   <div id="stockItemModal" class="modal-overlay hidden">
     <div class="modal-card">
