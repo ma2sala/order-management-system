@@ -1145,9 +1145,9 @@ table.grid tr:last-child td {
     border: 1px solid #000;
   }
   #itemsSummaryPrintArea .category-type-badge.drinks {
-    background: #dbeafe;
-    color: #1d4ed8;
-    border-color: #1d4ed8;
+    background: #d1fae5;
+    color: #047857;
+    border-color: #047857;
   }
   #itemsSummaryPrintArea .category-type-badge.meals {
     background: #ffe4d6;
@@ -1229,9 +1229,9 @@ table.grid tr:last-child td {
 }
 
 .category-type-badge.drinks {
-  background: rgba(78, 161, 242, 0.18);
-  color: var(--prog);
-  border: 1px solid var(--prog);
+  background: rgba(2, 44, 34, 0.5);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.5);
 }
 
 .category-type-badge.meals {

@@ -39,14 +39,16 @@
 
   const FOOD_TOP_CATEGORIES = ['Snacks', 'Meals'];
 
-  // Walk a menu item's category up to its top-level ancestor (mirrors the
-  // same logic the Barista/Chef displays use to split a ticket into
-  // drink items vs food items).
+  // GET /api/menu-items deliberately returns a SHALLOW category object
+  // (`{ id, name }`, no `.parent` link) — climbing menuItem.category.parent
+  // here doesn't work at all, it's simply not in the response. What IS
+  // always present is `categoryPath`, a ready-made string like
+  // "Drinks > Hot Drinks" or "Meals" built server-side — its first
+  // segment is always the true top-level category name, regardless of
+  // how many levels deep the item actually sits.
   function topCategoryName(menuItem) {
-    let c = menuItem && menuItem.category;
-    if (!c) return null;
-    while (c.parent) c = c.parent;
-    return c.name;
+    if (!menuItem || !menuItem.categoryPath) return null;
+    return menuItem.categoryPath.split(' > ')[0] || null;
   }
   function categoryBucket(menuItem) {
     const top = topCategoryName(menuItem);
@@ -60,13 +62,15 @@
   }
 
   // The drink sub-type just below "Drinks" — Alcohol, Hot Drinks,
-  // Juices & Smoothies, or Soft Drinks. Climbs past any deeper alcohol
-  // sub-type (Red Wine, Whisky, etc.) to land on "Alcohol" itself.
+  // Juices & Smoothies, or Soft Drinks. The second segment of
+  // categoryPath is always this level regardless of how much deeper the
+  // item nests below it (e.g. "Drinks > Alcohol > Whisky" still gives
+  // "Alcohol" here, same as topCategoryName above avoiding the
+  // unavailable .parent chain).
   function midCategoryName(menuItem) {
-    let c = menuItem && menuItem.category;
-    if (!c) return null;
-    while (c.parent && c.parent.parent) c = c.parent;
-    return c.name;
+    if (!menuItem || !menuItem.categoryPath) return null;
+    const segments = menuItem.categoryPath.split(' > ');
+    return segments.length >= 2 ? segments[1] : null;
   }
 
   // Small colored tag shown after a drink's name: red = Alcohol,
