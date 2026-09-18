@@ -1,6 +1,7 @@
 (function () {
   let token = localStorage.getItem('kds_cashier_token') || null;
   let user = JSON.parse(localStorage.getItem('kds_cashier_user') || 'null');
+  let socket = null;
 
   let unpaidOrders = []; // flat list from GET /api/payments/unpaid
   let selectedOrderId = null; // which order's bill is currently open in the modal
@@ -435,12 +436,31 @@
     if (e.target === screenshotLightbox) screenshotLightbox.classList.add('hidden');
   });
 
+  // ---------------- Socket ----------------
+  // Notifies the cashier the moment a table's order is fully done across
+  // every station it needed (see orderController.js's updateOrderStatus
+  // -> table_ready_for_checkout) — Open Bills refreshes itself instantly
+  // instead of waiting for a manual refresh or the next visit to this tab.
+  function connectSocket() {
+    socket = io({ auth: { token } });
+
+    socket.on('table_ready_for_checkout', ({ tableLabel }) => {
+      showToast(`Table ${tableLabel} is ready for checkout`);
+      loadUnpaidOrders();
+    });
+
+    socket.on('connect_error', (err) => {
+      console.error('Socket connection error:', err.message);
+    });
+  }
+
   // ---------------- Boot ----------------
   async function boot() {
     showApp();
     dateDisplay.textContent = new Date().toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
     headerDateInput.value = todayISO();
     historyDateInput.value = todayISO();
+    connectSocket();
     await loadUnpaidOrders();
   }
 

@@ -1200,6 +1200,13 @@
       loadStock();
     });
 
+    // A table's order just finished across every station it needed and
+    // is now sitting in the Cashier's Open Bills — surfaced here too so a
+    // manager watching this dashboard sees it without switching screens.
+    socket.on('table_ready_for_checkout', ({ tableLabel }) => {
+      showToast(`Table ${tableLabel} ready for checkout`);
+    });
+
     socket.on('connect_error', (err) => {
       console.error('Socket connection error:', err.message);
     });

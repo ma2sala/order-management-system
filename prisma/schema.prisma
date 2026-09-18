@@ -177,6 +177,16 @@ model Order {
 
   status OrderStatus @default(PENDING)
 
+  // Independent per-station completion — null means "this order has no
+  // items for that station" (e.g. a drinks-only order has kitchenStatus:
+  // null forever). `status` above is derived from these two: PENDING
+  // until any relevant station starts, IN_PROGRESS once any relevant
+  // station has started/finished, COMPLETED only once every relevant
+  // station reports COMPLETED. See updateOrderStatus() in
+  // orderController.js for exactly how these three are kept in sync.
+  kitchenStatus OrderStatus?
+  barStatus     OrderStatus?
+
   // Void/cancel requires manager sign-off — never hard-deleted, only flagged.
   isVoided   Boolean   @default(false)
   voidedById String?

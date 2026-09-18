@@ -58,6 +58,7 @@ function stationOf(menuItem) {
   if (!cat) return 'bar';
   while (cat.parent) cat = cat.parent;
   if (cat.name === 'Meals') return 'kitchen';
+  if (cat.name === 'Snacks') return 'kitchen';
   if (cat.name === 'Drinks') return 'bar';
   return 'bar';
 }
@@ -85,8 +86,13 @@ async function createOrder(req, res) {
 
   try {
     const menuItemIds = items.map((i) => i.menuItemId);
+    // Category tree included here (not just for pricing) so stationOf()
+    // can determine, right now at creation time, which station(s) this
+    // order actually needs — that's what seeds kitchenStatus/barStatus
+    // below, and what a mixed order gets split across in real time.
     const menuItems = await prisma.menuItem.findMany({
       where: { id: { in: menuItemIds } },
+      include: MENU_ITEM_CATEGORY_TREE_INCLUDE,
     });
 
     if (menuItems.length !== menuItemIds.length) {
@@ -94,12 +100,19 @@ async function createOrder(req, res) {
     }
 
     const priceMap = Object.fromEntries(menuItems.map((m) => [m.id, m.price]));
+    const menuItemMap = Object.fromEntries(menuItems.map((m) => [m.id, m]));
+
+    const stationsNeeded = new Set(items.map((i) => stationOf(menuItemMap[i.menuItemId])));
+    const hasKitchen = stationsNeeded.has('kitchen');
+    const hasBar = stationsNeeded.has('bar');
 
     const order = await prisma.order.create({
       data: {
         tableId,
         waiterId,
         status: 'PENDING',
+        kitchenStatus: hasKitchen ? 'PENDING' : null,
+        barStatus: hasBar ? 'PENDING' : null,
         items: {
           create: items.map((i) => ({
             menuItemId: i.menuItemId,
@@ -119,17 +132,18 @@ async function createOrder(req, res) {
 
     await logOrderCreated(order, req);
 
-    // Push to the barista/manager display in real time
+    // Push to the barista/chef displays in real time — each station only
+    // gets paged if this ticket actually has something for them; a
+    // drinks-only order never pings the Chef Display, and vice versa.
     console.log('[orders] Backend creating order for date:', order.createdAt, '| id:', order.id, '| table:', order.table?.label);
     const baristaRoom = getIO().sockets.adapter.rooms.get('barista_channel');
     const chefRoom = getIO().sockets.adapter.rooms.get('chef_channel');
     console.log('[orders] barista_channel has', baristaRoom ? baristaRoom.size : 0, '| chef_channel has', chefRoom ? chefRoom.size : 0, 'connected socket(s)');
 
-    getIO().to('barista_channel').emit('new_order', order);
-
-    // Only page the Chef Display if this ticket actually has a kitchen
-    // item on it — a drinks-only order has nothing for the kitchen to do.
-    if (order.items.some((i) => i.station === 'kitchen')) {
+    if (hasBar) {
+      getIO().to('barista_channel').emit('new_order', order);
+    }
+    if (hasKitchen) {
       getIO().to('chef_channel').emit('new_order', order);
     }
 
@@ -140,15 +154,40 @@ async function createOrder(req, res) {
   }
 }
 
-// PATCH /api/orders/:id/status — Barista/manager updates status
+// Each order tracks kitchenStatus/barStatus independently (null means
+// "no items for that station on this order"). The overall `status` is
+// derived from the two: PENDING until any relevant station has started,
+// IN_PROGRESS once any relevant station has started or finished,
+// COMPLETED only once EVERY relevant station reports COMPLETED. That
+// derived COMPLETED is also exactly what makes an order show up in the
+// Cashier's unpaid list (GET /api/payments/unpaid filters on
+// status: 'COMPLETED') — a mixed food+drink order only reaches the
+// cashier once both the kitchen and the bar have finished their half.
+function deriveOverallStatus(kitchenStatus, barStatus) {
+  const relevant = [kitchenStatus, barStatus].filter((s) => s != null);
+  if (relevant.length === 0) return 'PENDING'; // shouldn't happen — every order needs at least one station
+  if (relevant.every((s) => s === 'COMPLETED')) return 'COMPLETED';
+  if (relevant.some((s) => s === 'IN_PROGRESS' || s === 'COMPLETED')) return 'IN_PROGRESS';
+  return 'PENDING';
+}
+
+// PATCH /api/orders/:id/status — Barista/Chef/manager updates status for
+// their OWN station only (body: { status: 'IN_PROGRESS' | 'COMPLETED',
+// station: 'kitchen' | 'bar' }). Each station's queue is managed
+// completely independently; the shared `status` field above is only
+// ever written here as the derived result, never set directly by a
+// station's PATCH.
 async function updateOrderStatus(req, res) {
   const { id } = req.params;
-  const { status } = req.body; // 'IN_PROGRESS' | 'COMPLETED'
+  const { status, station } = req.body;
   const changedById = req.user.id;
 
   const allowedTransitions = ['IN_PROGRESS', 'COMPLETED'];
   if (!allowedTransitions.includes(status)) {
     return res.status(400).json({ error: `status must be one of ${allowedTransitions.join(', ')}` });
+  }
+  if (station !== 'kitchen' && station !== 'bar') {
+    return res.status(400).json({ error: "station must be 'kitchen' or 'bar'" });
   }
 
   try {
@@ -156,25 +195,49 @@ async function updateOrderStatus(req, res) {
     if (!existing) return res.status(404).json({ error: 'Order not found' });
     if (existing.isVoided) return res.status(409).json({ error: 'Cannot update a voided order' });
 
+    const stationField = station === 'kitchen' ? 'kitchenStatus' : 'barStatus';
+    if (existing[stationField] == null) {
+      return res.status(400).json({ error: `This order has no items for the ${station} station` });
+    }
+
+    const newKitchenStatus = station === 'kitchen' ? status : existing.kitchenStatus;
+    const newBarStatus = station === 'bar' ? status : existing.barStatus;
+    const newOverallStatus = deriveOverallStatus(newKitchenStatus, newBarStatus);
+
     const updated = await prisma.order.update({
       where: { id },
       data: {
-        status,
-        statusLogs: { create: { fromStatus: existing.status, toStatus: status, changedById } },
+        [stationField]: status,
+        status: newOverallStatus,
+        statusLogs: { create: { fromStatus: existing.status, toStatus: newOverallStatus, changedById } },
       },
-      include: { waiter: true, items: { include: { menuItem: true } } },
+      include: { waiter: true, table: true, items: { include: { menuItem: true } } },
     });
 
-    // Notify only the waiter who owns this order
-    getIO().to(`waiter_${updated.waiterId}`).emit('status_updated', {
+    const payload = {
       orderId: updated.id,
+      station,
+      stationStatus: status,
+      kitchenStatus: updated.kitchenStatus,
+      barStatus: updated.barStatus,
       status: updated.status,
-    });
-    // Managers watch everything for oversight
-    getIO().to('manager_channel').emit('status_updated', {
-      orderId: updated.id,
-      status: updated.status,
-    });
+    };
+
+    // Notify only the waiter who owns this order, plus managers watching everything
+    getIO().to(`waiter_${updated.waiterId}`).emit('status_updated', payload);
+    getIO().to('manager_channel').emit('status_updated', payload);
+
+    // The order just became fully done across every station it needed —
+    // hand it to the Cashier and let the waiter know the table can be
+    // checked out. (existing.status !== 'COMPLETED' guards this so it
+    // only fires once, on the actual transition, not on every later
+    // no-op re-save.)
+    if (existing.status !== 'COMPLETED' && updated.status === 'COMPLETED') {
+      const readyPayload = { orderId: updated.id, tableId: updated.tableId, tableLabel: updated.table.label };
+      getIO().to(`waiter_${updated.waiterId}`).emit('table_ready_for_checkout', readyPayload);
+      getIO().to('cashier_channel').emit('table_ready_for_checkout', readyPayload);
+      getIO().to('manager_channel').emit('table_ready_for_checkout', readyPayload);
+    }
 
     return res.json(updated);
   } catch (err) {
@@ -287,15 +350,26 @@ async function listAllOrdersForDay(req, res) {
 async function listCompletedToday(req, res) {
   try {
     const dateParam = req.query.date;
+    // Optional ?station=kitchen|bar — narrows to THAT station's own
+    // completion (kitchenStatus/barStatus === 'COMPLETED') rather than
+    // the whole order's derived status, so Chef's "Recent Completed" tab
+    // shows a ticket the moment the kitchen finishes its half, even if
+    // the bar side of that same order is still in progress (and vice
+    // versa for Barista). Omitting it keeps the old whole-order behavior.
+    const station = req.query.station;
     const dayStart = addisDayStart(dateParam);
     const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
 
+    const where = {
+      isVoided: false,
+      createdAt: { gte: dayStart, lt: dayEnd },
+    };
+    if (station === 'kitchen') where.kitchenStatus = 'COMPLETED';
+    else if (station === 'bar') where.barStatus = 'COMPLETED';
+    else where.status = 'COMPLETED';
+
     const orders = await prisma.order.findMany({
-      where: {
-        status: 'COMPLETED',
-        isVoided: false,
-        createdAt: { gte: dayStart, lt: dayEnd },
-      },
+      where,
       include: { items: { include: { menuItem: { include: MENU_ITEM_CATEGORY_TREE_INCLUDE } } }, table: true, waiter: true },
       orderBy: { updatedAt: 'desc' },
       take: 30,

@@ -283,21 +283,36 @@
   function connectSocket() {
     socket = io({ auth: { token } });
 
-    socket.on('status_updated', ({ orderId, status }) => {
+    // Fired every time EITHER station (kitchen or bar) changes its own
+    // half of a ticket — station/stationStatus tell you which one just
+    // moved, kitchenStatus/barStatus/status are the order's full current
+    // picture. This is the per-station "ready" ping (item finished, but
+    // the table as a whole may still be waiting on the other station);
+    // the distinct, whole-table 'table_ready_for_checkout' event below
+    // is what fires once both are done.
+    socket.on('status_updated', ({ orderId, station, stationStatus, status }) => {
       const order = myOrders.find((o) => o.id === orderId);
       if (order) order.status = status;
       renderOrders();
 
-      if (status === 'COMPLETED') {
+      if (stationStatus === 'COMPLETED') {
         playCompletionChime();
         const tableLabel = order ? order.table.label : 'your table';
-        pushNotification(`Order for ${tableLabel} is ready!`);
+        const stationLabel = station === 'kitchen' ? 'Kitchen' : 'Bar';
+        pushNotification(`${stationLabel} ready for ${tableLabel}`);
         return;
       }
 
-      const meta = STATUS_META[status] || {};
+      const meta = STATUS_META[stationStatus] || {};
       const label = order ? `Ticket for ${order.table.label}` : 'Your order';
-      pushNotification(`${label} — ${meta.label || status}`);
+      pushNotification(`${label} — ${meta.label || stationStatus}`);
+    });
+
+    // Fired once, only when every station a ticket needed has finished —
+    // the table is genuinely ready to be paid out at the Cashier now.
+    socket.on('table_ready_for_checkout', ({ tableLabel }) => {
+      playCompletionChime();
+      pushNotification(`Order for ${tableLabel} is ready!`);
     });
 
     socket.on('order_voided', ({ orderId }) => {

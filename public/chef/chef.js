@@ -16,6 +16,23 @@
   let flashIds = new Set();
   let view = 'active';
 
+  // Mobile/some desktop browsers block audio until a real user gesture has
+  // happened on the page. Explicitly create/resume the AudioContext on the
+  // very first tap/click anywhere, so it's already unlocked well before a
+  // 'new_order' socket event ever needs to play a chime.
+  function unlockAudioOnce() {
+    try {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AC();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    } catch (e) {
+      // ignore — playChime() will just no-op later if this never unlocks
+    }
+  }
+  document.addEventListener('click', unlockAudioOnce, { once: true });
+
   // ---------------- DOM refs ----------------
   const loginScreen = document.getElementById('loginScreen');
   const appScreen = document.getElementById('appScreen');
@@ -25,6 +42,8 @@
   const pendingCountEl = document.getElementById('pendingCount');
   const progressCountEl = document.getElementById('progressCount');
   const muteBtn = document.getElementById('muteBtn');
+  const muteIconOn = document.getElementById('muteIconOn');
+  const muteIconOff = document.getElementById('muteIconOff');
   const completedDateInput = document.getElementById('completedDateInput');
   const historyBtn = document.getElementById('historyBtn');
   const logoutBtn = document.getElementById('logoutBtn');
@@ -134,7 +153,8 @@
 
   muteBtn.addEventListener('click', () => {
     muted = !muted;
-    muteBtn.textContent = muted ? '🔇' : '🔊';
+    muteIconOn.classList.toggle('hidden', muted);
+    muteIconOff.classList.toggle('hidden', !muted);
   });
 
   // ---------------- Socket ----------------
@@ -208,12 +228,12 @@
   // first flips that status for the whole order. The other display picks
   // up the change on its next 3-second poll.
   async function startPreparing(ticket) {
-    ticket.status = 'IN_PROGRESS';
+    ticket.kitchenStatus = 'IN_PROGRESS';
     render();
     try {
       await api(`/api/orders/${ticket.id}/status`, {
         method: 'PATCH',
-        body: JSON.stringify({ status: 'IN_PROGRESS' }),
+        body: JSON.stringify({ status: 'IN_PROGRESS', station: 'kitchen' }),
       });
     } catch (err) {
       console.error('Failed to update status:', err);
@@ -222,13 +242,13 @@
 
   async function markComplete(ticket) {
     activeTickets = activeTickets.filter((t) => t.id !== ticket.id);
-    completedTickets.unshift({ ...ticket, status: 'COMPLETED', completedAt: new Date().toISOString() });
+    completedTickets.unshift({ ...ticket, kitchenStatus: 'COMPLETED', completedAt: new Date().toISOString() });
     completedTickets = completedTickets.slice(0, 30);
     render();
     try {
       await api(`/api/orders/${ticket.id}/status`, {
         method: 'PATCH',
-        body: JSON.stringify({ status: 'COMPLETED' }),
+        body: JSON.stringify({ status: 'COMPLETED', station: 'kitchen' }),
       });
     } catch (err) {
       console.error('Failed to update status:', err);
@@ -246,8 +266,8 @@
 
   // ---------------- Rendering ----------------
   function render() {
-    const pending = activeTickets.filter((t) => t.status === 'PENDING').length;
-    const inProgress = activeTickets.filter((t) => t.status === 'IN_PROGRESS').length;
+    const pending = activeTickets.filter((t) => t.kitchenStatus === 'PENDING').length;
+    const inProgress = activeTickets.filter((t) => t.kitchenStatus === 'IN_PROGRESS').length;
     pendingCountEl.textContent = pending;
     progressCountEl.textContent = inProgress;
     activeTabCount.textContent = activeTickets.length ? `(${activeTickets.length})` : '';
@@ -280,7 +300,7 @@
   }
 
   function ticketCardHtml(ticket) {
-    const isPending = ticket.status === 'PENDING';
+    const isPending = ticket.kitchenStatus === 'PENDING';
     const accent = isPending ? 'var(--wait)' : 'var(--prog)';
     const { text: elapsedText, overdue } = elapsedLabel(ticket.createdAt);
     const flashing = flashIds.has(ticket.id);
@@ -365,7 +385,7 @@
   async function loadCompleted() {
     try {
       const date = completedDateInput.value; // YYYY-MM-DD
-      const completed = await api(`/api/orders/completed?date=${date}`);
+      const completed = await api(`/api/orders/completed?date=${date}&station=kitchen`);
       completedTickets = narrowToKitchenMany(completed);
       render();
     } catch (err) {
@@ -417,7 +437,7 @@
     try {
       const [active, completed] = await Promise.all([
         api('/api/orders'),
-        api(`/api/orders/completed?date=${completedDateInput.value}`),
+        api(`/api/orders/completed?date=${completedDateInput.value}&station=kitchen`),
       ]);
       activeTickets = narrowToKitchenMany(active);
       completedTickets = narrowToKitchenMany(completed);

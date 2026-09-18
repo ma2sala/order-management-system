@@ -15,6 +15,24 @@
   let flashIds = new Set();
   let view = 'active';
 
+  // Mobile/some desktop browsers block audio until a real user gesture has
+  // happened on the page. Explicitly create/resume the AudioContext on the
+  // very first tap/click anywhere, so it's already unlocked well before a
+  // 'new_order' socket event ever needs to play a chime (same approach as
+  // the Waiter screen's unlockAudioOnce()).
+  function unlockAudioOnce() {
+    try {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AC();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    } catch (e) {
+      // ignore — playChime() will just no-op later if this never unlocks
+    }
+  }
+  document.addEventListener('click', unlockAudioOnce, { once: true });
+
   // ---------------- DOM refs ----------------
   const loginScreen = document.getElementById('loginScreen');
   const appScreen = document.getElementById('appScreen');
@@ -190,12 +208,12 @@
 
   // ---------------- Status actions ----------------
   async function startPreparing(ticket) {
-    ticket.status = 'IN_PROGRESS';
+    ticket.barStatus = 'IN_PROGRESS';
     render();
     try {
       await api(`/api/orders/${ticket.id}/status`, {
         method: 'PATCH',
-        body: JSON.stringify({ status: 'IN_PROGRESS' }),
+        body: JSON.stringify({ status: 'IN_PROGRESS', station: 'bar' }),
       });
     } catch (err) {
       console.error('Failed to update status:', err);
@@ -204,13 +222,13 @@
 
   async function markComplete(ticket) {
     activeTickets = activeTickets.filter((t) => t.id !== ticket.id);
-    completedTickets.unshift({ ...ticket, status: 'COMPLETED', completedAt: new Date().toISOString() });
+    completedTickets.unshift({ ...ticket, barStatus: 'COMPLETED', completedAt: new Date().toISOString() });
     completedTickets = completedTickets.slice(0, 30);
     render();
     try {
       await api(`/api/orders/${ticket.id}/status`, {
         method: 'PATCH',
-        body: JSON.stringify({ status: 'COMPLETED' }),
+        body: JSON.stringify({ status: 'COMPLETED', station: 'bar' }),
       });
     } catch (err) {
       console.error('Failed to update status:', err);
@@ -231,8 +249,8 @@
     const barActive = activeTickets.filter(hasBarItems);
     const barCompleted = completedTickets.filter(hasBarItems);
 
-    const pending = barActive.filter((t) => t.status === 'PENDING').length;
-    const inProgress = barActive.filter((t) => t.status === 'IN_PROGRESS').length;
+    const pending = barActive.filter((t) => t.barStatus === 'PENDING').length;
+    const inProgress = barActive.filter((t) => t.barStatus === 'IN_PROGRESS').length;
     pendingCountEl.textContent = pending;
     progressCountEl.textContent = inProgress;
     activeTabCount.textContent = barActive.length ? `(${barActive.length})` : '';
@@ -265,7 +283,7 @@
   }
 
   function ticketCardHtml(ticket) {
-    const isPending = ticket.status === 'PENDING';
+    const isPending = ticket.barStatus === 'PENDING';
     const accent = isPending ? 'var(--wait)' : 'var(--prog)';
     const { text: elapsedText, overdue } = elapsedLabel(ticket.createdAt);
     const flashing = flashIds.has(ticket.id);
@@ -351,7 +369,7 @@
   async function loadCompleted() {
     try {
       const date = completedDateInput.value; // YYYY-MM-DD
-      completedTickets = await api(`/api/orders/completed?date=${date}`);
+      completedTickets = await api(`/api/orders/completed?date=${date}&station=bar`);
       render();
     } catch (err) {
       console.error('Failed to load completed orders:', err);
@@ -407,8 +425,8 @@
     try {
       const [active, completed] = await Promise.all([
         api('/api/orders'), // active queue seed
-        api(`/api/orders/completed?date=${completedDateInput.value}`), // today's completed orders, so this
-                                                                         // tab isn't empty after a refresh
+        api(`/api/orders/completed?date=${completedDateInput.value}&station=bar`), // today's completed orders, so this
+                                                                                  // tab isn't empty after a refresh
       ]);
       console.log('[barista] API response orders fetched (initial active):', active);
       console.log('[barista] API response orders fetched (initial completed):', completed);

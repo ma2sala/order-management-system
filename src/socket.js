@@ -34,6 +34,9 @@ function initSocket(httpServer) {
     if (role === 'CHEF' || role === 'MANAGER') {
       socket.join('chef_channel');
     }
+    if (role === 'CASHIER' || role === 'MANAGER') {
+      socket.join('cashier_channel');
+    }
     if (role === 'WAITER') {
       socket.join(`waiter_${id}`);
     }
