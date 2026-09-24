@@ -71,11 +71,55 @@
         ...(options.headers || {}),
       },
     });
+    // A 401 on anything but the login request itself means this screen's
+    // login has expired (tokens last 12h — see authController.js).
+    if (res.status === 401 && path !== '/api/auth/login') sessionExpired();
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       throw new Error(body.error || `Request failed: ${res.status}`);
     }
     return res.json();
+  }
+
+  // ---------------- Session expiry + connection warning ----------------
+  // Before this, an expired login failed silently: the 3s poll only
+  // logged to the console, a socket reconnect was rejected, and even a
+  // page refresh just showed an empty queue — so the display looked
+  // fine while no new orders ever arrived. Now it drops back to the
+  // sign-in screen and says why.
+  let pollTimer = null;
+  let renderTimer = null;
+
+  function sessionExpired() {
+    if (!token) return; // already handled
+    token = null;
+    user = null;
+    localStorage.removeItem('kds_barista_token');
+    localStorage.removeItem('kds_barista_user');
+    clearInterval(pollTimer);
+    clearInterval(renderTimer);
+    if (socket) {
+      socket.removeAllListeners();
+      socket.disconnect();
+      socket = null;
+    }
+    setConnectionWarning(false);
+    appScreen.classList.add('hidden');
+    loginScreen.classList.remove('hidden');
+    loginError.textContent = 'Your login expired — sign in again to keep receiving orders.';
+  }
+
+  // Red banner while the server can't be reached (Wi-Fi down, server
+  // restarting) — new orders can't arrive, and the staff should know.
+  let connectionBanner = null;
+  function setConnectionWarning(show) {
+    if (!connectionBanner) {
+      connectionBanner = document.createElement('div');
+      connectionBanner.className = 'connection-banner hidden';
+      connectionBanner.textContent = '⚠ Connection lost — new orders may not appear. Check the Wi-Fi.';
+      document.body.appendChild(connectionBanner);
+    }
+    connectionBanner.classList.toggle('hidden', !show);
   }
 
   // ---------------- Login ----------------
@@ -147,6 +191,7 @@
 
     socket.on('connect', () => {
       console.log('[barista] Socket connected. id:', socket.id);
+      setConnectionWarning(false);
     });
 
     // Server emits this to the barista_channel room whenever a waiter
@@ -172,6 +217,7 @@
 
     socket.on('connect_error', (err) => {
       console.error('Socket connection error:', err.message);
+      if (err.message.startsWith('Unauthorized')) sessionExpired();
     });
   }
 
@@ -611,8 +657,10 @@
       console.log('[barista] API response orders fetched (poll):', active);
       reconcileActiveTickets(active);
       render();
+      setConnectionWarning(false);
     } catch (err) {
       console.error('Active-orders poll failed:', err);
+      if (token) setConnectionWarning(true); // (a 401 already ended the session)
     }
   }
 
@@ -639,8 +687,11 @@
       console.error('Failed to load orders:', err);
     }
     render();
-    setInterval(render, 1000); // keep elapsed-time counters ticking
-    setInterval(pollActiveOrders, 3000); // socket resilience backstop
+    if (!token) return; // login had already expired — now on the sign-in screen
+    clearInterval(renderTimer);
+    clearInterval(pollTimer);
+    renderTimer = setInterval(render, 1000); // keep elapsed-time counters ticking
+    pollTimer = setInterval(pollActiveOrders, 3000); // socket resilience backstop
   }
 
   if (token && user) {

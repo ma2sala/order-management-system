@@ -81,6 +81,10 @@
 
   let toastTimer = null;
   function showToast(message, isError) {
+    // Signed out (e.g. an expired login mid-request) — the sign-in screen's
+    // own message says what happened; a stray "Unauthorized" toast over it
+    // would only confuse.
+    if (!token) return;
     let toast = document.getElementById('toast');
     if (!toast) {
       toast = document.createElement('div');
@@ -105,10 +109,49 @@
         ...(options.headers || {}),
       },
     });
+    // A 401 on anything but the login request itself means this screen's
+    // login has expired (tokens last 12h — see authController.js).
+    if (res.status === 401 && path !== '/api/auth/login') sessionExpired();
     if (res.status === 204) return null;
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
     return data;
+  }
+
+  // ---------------- Session expiry + connection warning ----------------
+  // Same fix as the Chef/Barista displays: before this, an expired login
+  // failed silently — the socket's reconnect was rejected, so the cashier
+  // stopped getting "ready" alerts and couldn't send orders, with nothing
+  // on screen saying why. Now it drops back to the sign-in screen and
+  // says so. Nothing is reloaded, so a half-entered order is still there
+  // after signing back in.
+  function sessionExpired() {
+    if (!token) return; // already handled
+    token = null;
+    user = null;
+    localStorage.removeItem('kds_cashier_token');
+    localStorage.removeItem('kds_cashier_user');
+    if (socket) {
+      socket.removeAllListeners();
+      socket.disconnect();
+      socket = null;
+    }
+    setConnectionWarning(false);
+    showLogin();
+    loginError.textContent = 'Your login expired — sign in again to keep taking orders.';
+  }
+
+  // Red banner while the live connection is down — "ready" alerts can't
+  // arrive, so the cashier would otherwise never hear about finished food.
+  let connectionBanner = null;
+  function setConnectionWarning(show) {
+    if (!connectionBanner) {
+      connectionBanner = document.createElement('div');
+      connectionBanner.className = 'connection-banner hidden';
+      connectionBanner.textContent = '⚠ Connection lost — "ready" alerts may not appear. Check the Wi-Fi.';
+      document.body.appendChild(connectionBanner);
+    }
+    connectionBanner.classList.toggle('hidden', !show);
   }
 
   function showApp() {
@@ -535,7 +578,28 @@
   // and stays there until the cashier has told the waitress and taps ✕ —
   // a 3-second toast alone is too easy to miss at a busy counter.
   function connectSocket() {
+    if (socket) {
+      // A re-login after sessionExpired()/logout — never run two at once
+      socket.removeAllListeners();
+      socket.disconnect();
+    }
     socket = io({ auth: { token } });
+
+    // A brief blip reconnects on its own; while it's down, say so. Any
+    // order that finished in the meantime is picked up by reloading the
+    // open bills on reconnect.
+    let wasDisconnected = false;
+    socket.on('disconnect', () => {
+      wasDisconnected = true;
+      setConnectionWarning(true);
+    });
+    socket.on('connect', () => {
+      setConnectionWarning(false);
+      if (wasDisconnected) {
+        wasDisconnected = false;
+        loadUnpaidOrders();
+      }
+    });
 
     socket.on('table_ready_for_checkout', ({ orderId, tableLabel, waiterName }) => {
       addReady({ key: `${orderId}:all`, label: '✅ Order ready', tableLabel, waiterName });
@@ -552,6 +616,11 @@
 
     socket.on('connect_error', (err) => {
       console.error('Socket connection error:', err.message);
+      if (err.message.startsWith('Unauthorized')) {
+        sessionExpired();
+        return;
+      }
+      setConnectionWarning(true);
     });
   }
 
@@ -562,7 +631,11 @@
     headerDateInput.value = todayISO();
     historyDateInput.value = todayISO();
     connectSocket();
+    // Mounted once; on a later sign-in (e.g. after an expired login) its
+    // waitress/table/menu lists are reloaded, since the first load may
+    // have been rejected. A half-entered order is kept either way.
     if (!orderEntry) orderEntry = window.CashierOrderEntry({ api, showToast, escapeHtml, customizationSummary });
+    else orderEntry.refresh().catch((err) => showToast(err.message || 'Failed to load the menu', true));
     await loadUnpaidOrders();
   }
 

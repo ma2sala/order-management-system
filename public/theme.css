@@ -89,6 +89,23 @@ input {
   display: none !important;
 }
 
+/* Shown by the Chef/Barista displays while the server can't be reached —
+   new orders can't arrive, so it has to be impossible to miss. */
+.connection-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  padding: 14px 16px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
 .mono {
   font-family: var(--font-mono);
 }
