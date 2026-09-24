@@ -512,6 +512,10 @@
   let readyItems = []; // [{ key, label, tableLabel, waiterName, time }]
   let audioCtx = null;
 
+  // Peak volume of the new-order / ready chime (0–1). Was 0.22 — raised
+  // so it's heard over a busy kitchen/counter. Lower this if it's too much.
+  const CHIME_VOLUME = 0.9;
+
   // Web Audio chime, same approach as the waiter screen — no sound file
   // to go missing. Browsers only allow audio after a click on the page,
   // which the cashier will have made long before the first ready event.
@@ -520,17 +524,32 @@
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx.state === 'suspended') audioCtx.resume();
       const now = audioCtx.currentTime;
-      [660, 990].forEach((freq, i) => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.0001, now + i * 0.12);
-        gain.gain.exponentialRampToValueAtTime(0.2, now + i * 0.12 + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.12 + 0.28);
-        osc.connect(gain).connect(audioCtx.destination);
-        osc.start(now + i * 0.12);
-        osc.stop(now + i * 0.12 + 0.3);
+      // Louder than the original soft sine "ding": triangle wave (carries
+      // better over kitchen noise), ~4x the volume, longer notes, and the
+      // pattern plays twice. The compressor acts as a limiter so the
+      // overlapping notes get loud without crackling/distorting.
+      const limiter = audioCtx.createDynamicsCompressor();
+      limiter.threshold.value = -6;
+      limiter.knee.value = 0;
+      limiter.ratio.value = 20;
+      limiter.attack.value = 0.002;
+      limiter.release.value = 0.1;
+      limiter.connect(audioCtx.destination);
+      const notes = [660, 880, 990]; // three rising notes — a distinct "ready!" sound;
+      [0, 0.75].forEach((repeatAt) => {
+        notes.forEach((freq, i) => {
+          const start = now + repeatAt + i * 0.18;
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.0001, start);
+          gain.gain.exponentialRampToValueAtTime(CHIME_VOLUME, start + 0.015);
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.5);
+          osc.connect(gain).connect(limiter);
+          osc.start(start);
+          osc.stop(start + 0.52);
+        });
       });
     } catch (e) {
       // Web Audio unavailable — the ready strip still shows
@@ -605,6 +624,33 @@
       addReady({ key: `${orderId}:all`, label: '✅ Order ready', tableLabel, waiterName });
       showToast(`Table ${tableLabel} is ready for checkout`);
       loadUnpaidOrders();
+    });
+
+    // Paid at another cashier screen (or by a manager) — drop it from
+    // Open Bills here too, and refresh history if that's on screen.
+    socket.on('orders_paid', ({ orderIds }) => {
+      // (markPaidBtn is disabled while THIS screen's own payment is in
+      // flight — that one isn't "another screen".)
+      const payingHere = markPaidBtn.disabled;
+      if (!payingHere && selectedOrderId && orderIds.includes(selectedOrderId) && !billModal.classList.contains('hidden')) {
+        billModal.classList.add('hidden');
+        showToast('This bill was just paid on another screen');
+      }
+      loadUnpaidOrders();
+      if (!historyView.classList.contains('hidden')) loadHistory();
+    });
+
+    // A manager voided an order — it's no longer a bill or a pickup
+    socket.on('order_voided', ({ orderId }) => {
+      readyItems = readyItems.filter((r) => !r.key.startsWith(`${orderId}:`));
+      renderReadyStrip();
+      loadUnpaidOrders();
+    });
+
+    // Price / availability / new item changed in the Manager Dashboard —
+    // reload the New Order menu (a half-entered order is kept).
+    socket.on('menu_changed', () => {
+      if (orderEntry) orderEntry.refresh().catch(() => {});
     });
 
     // Only one station of a mixed food + drinks order is done — the

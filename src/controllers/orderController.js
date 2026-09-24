@@ -192,6 +192,9 @@ async function createOrder(req, res) {
     // Managers watch everything — the dashboard's Orders tab live-inserts
     // this without a page refresh (see admin.js's socket.on('new_order')).
     getIO().to('manager_channel').emit('new_order', order);
+    // The waitress's own "My Orders" — matters when the cashier entered
+    // this from her paper ticket rather than her sending it herself.
+    getIO().to(`waiter_${waiterId}`).emit('new_order', { orderId: order.id });
 
     return res.status(201).json(order);
   } catch (err) {
@@ -274,6 +277,10 @@ async function updateOrderStatus(req, res) {
     // Managers always get the granular per-station payload — the
     // dashboard patches its own state off of it (see admin.js).
     getIO().to('manager_channel').emit('status_updated', payload);
+    // Several Chef/Barista tablets can be open at once — when one taps
+    // Start/Complete, the others update too instead of showing a stale
+    // "Pending" until someone refreshes.
+    getIO().to('chef_channel').to('barista_channel').emit('status_updated', payload);
 
     // The waiter gets exactly ONE event per update, never two for the
     // same underlying change: table_ready_for_checkout below is the
@@ -351,6 +358,8 @@ async function voidOrder(req, res) {
     // Managers weren't in this list before — the dashboard needs it to
     // patch its Overview stats and Orders table live (see admin.js).
     getIO().to('manager_channel').emit('order_voided', { orderId: id });
+    // A voided order leaves the Cashier's Open Bills / ready alerts
+    getIO().to('cashier_channel').emit('order_voided', { orderId: id });
 
     return res.json(voided);
   } catch (err) {

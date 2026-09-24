@@ -153,6 +153,10 @@
     appScreen.classList.remove('hidden');
   }
 
+  // Peak volume of the new-order / ready chime (0–1). Was 0.22 — raised
+  // so it's heard over a busy kitchen/counter. Lower this if it's too much.
+  const CHIME_VOLUME = 0.9;
+
   // ---------------- Audio chime (Web Audio, no external asset) ----------------
   function playChime() {
     if (muted) return;
@@ -162,17 +166,32 @@
         audioCtx = new AC();
       }
       const now = audioCtx.currentTime;
-      [880, 1175].forEach((freq, i) => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.0001, now + i * 0.14);
-        gain.gain.exponentialRampToValueAtTime(0.22, now + i * 0.14 + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.14 + 0.32);
-        osc.connect(gain).connect(audioCtx.destination);
-        osc.start(now + i * 0.14);
-        osc.stop(now + i * 0.14 + 0.34);
+      // Louder than the original soft sine "ding": triangle wave (carries
+      // better over kitchen noise), ~4x the volume, longer notes, and the
+      // pattern plays twice. The compressor acts as a limiter so the
+      // overlapping notes get loud without crackling/distorting.
+      const limiter = audioCtx.createDynamicsCompressor();
+      limiter.threshold.value = -6;
+      limiter.knee.value = 0;
+      limiter.ratio.value = 20;
+      limiter.attack.value = 0.002;
+      limiter.release.value = 0.1;
+      limiter.connect(audioCtx.destination);
+      const notes = [880, 1175]; // higher than the Chef's pattern, so side-by-side screens are told apart by ear;
+      [0, 0.75].forEach((repeatAt) => {
+        notes.forEach((freq, i) => {
+          const start = now + repeatAt + i * 0.18;
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.0001, start);
+          gain.gain.exponentialRampToValueAtTime(CHIME_VOLUME, start + 0.015);
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.5);
+          osc.connect(gain).connect(limiter);
+          osc.start(start);
+          osc.stop(start + 0.52);
+        });
       });
     } catch (e) {
       // Audio not available in this environment — fail silently
@@ -203,6 +222,23 @@
       // to make — a food-only order is silently added (so it's tracked for
       // status purposes) but doesn't interrupt the barista.
       if (hasBarItems(order)) flashAndChime(order.id);
+      render();
+    });
+
+    // Another Barista tablet tapped Start/Complete on a ticket — keep every
+    // open tablet in step instead of showing a stale status until refresh.
+    // (This tablet's own taps are already applied optimistically, and
+    // skipped here while their request is still in flight.)
+    socket.on('status_updated', ({ orderId, station, barStatus }) => {
+      if (station !== 'bar' || inFlightStatusUpdates.has(orderId)) return;
+      const ticket = activeTickets.find((t) => t.id === orderId);
+      if (!ticket) return;
+      if (barStatus === 'COMPLETED') {
+        activeTickets = activeTickets.filter((t) => t.id !== orderId);
+        loadCompleted(); // so "Recent Completed" shows it on this tablet too
+      } else {
+        ticket.barStatus = barStatus;
+      }
       render();
     });
 
@@ -648,6 +684,14 @@
     // Barista's OWN completion a moment ago that the server has now
     // confirmed) — this is also what actually removes a just-completed
     // ticket instead of letting the next poll resurrect it.
+    // Also correct the status of tickets already on screen, in case a
+    // live update from another tablet was missed (e.g. a Wi-Fi blip).
+    const serverById = new Map(serverTickets.map((t) => [t.id, t]));
+    activeTickets.forEach((t) => {
+      const fresh = serverById.get(t.id);
+      if (fresh && !inFlightStatusUpdates.has(t.id)) t.barStatus = fresh.barStatus;
+    });
+
     activeTickets = activeTickets.filter((t) => barActiveServerIds.has(t.id));
   }
 

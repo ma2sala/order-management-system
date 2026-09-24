@@ -1,4 +1,12 @@
 const prisma = require('../prisma/client');
+const { getIO } = require('../socket');
+
+// Every screen that shows the menu (Waiter, Cashier's New Order tab,
+// other Manager Dashboards) reloads it on this — so a price change or an
+// item marked Removed shows up everywhere without anyone refreshing.
+function broadcastMenuChanged() {
+  getIO().emit('menu_changed');
+}
 
 const VALID_TEMPERATURES = ['HOT', 'COLD', 'NORMAL', 'NORMAL_WITH_ICE'];
 
@@ -169,6 +177,7 @@ async function createMenuItem(req, res) {
     if (existing) return res.status(409).json({ error: 'A menu item with this name already exists' });
 
     const item = await prisma.menuItem.create({ data, include: CATEGORY_TREE_INCLUDE });
+    broadcastMenuChanged();
     res.status(201).json(serializeMenuItem(item));
   } catch (err) {
     console.error('createMenuItem error:', err);
@@ -196,6 +205,7 @@ async function updateMenuItem(req, res) {
     }
 
     const item = await prisma.menuItem.update({ where: { id }, data, include: CATEGORY_TREE_INCLUDE });
+    broadcastMenuChanged();
     res.json(serializeMenuItem(item));
   } catch (err) {
     if (err.code === 'P2025') return res.status(404).json({ error: 'Menu item not found' });
@@ -225,6 +235,7 @@ async function deleteMenuItem(req, res) {
     }
 
     await prisma.menuItem.delete({ where: { id } });
+    broadcastMenuChanged();
     res.status(204).end();
   } catch (err) {
     if (err.code === 'P2025') return res.status(404).json({ error: 'Menu item not found' });

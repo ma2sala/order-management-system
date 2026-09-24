@@ -1,4 +1,5 @@
 const prisma = require('../prisma/client');
+const { getIO } = require('../socket');
 const { addisDayStart } = require('./orderController');
 
 const VALID_PAYMENT_METHODS = ['CASH', 'CARD', 'MOBILE_MONEY', 'TELEBIRR', 'CBE', 'BOA'];
@@ -93,6 +94,11 @@ async function recordPayment(req, res) {
       where: { id: { in: orderIds } },
       include: ORDER_WITH_BILL_DETAILS,
     });
+
+    // Other cashier screens drop these from Open Bills, and the Manager
+    // Dashboard's orders/revenue refresh — without anyone reloading.
+    getIO().to('cashier_channel').to('manager_channel').emit('orders_paid', { orderIds });
+
     res.json(paidOrders);
   } catch (err) {
     console.error('recordPayment error:', err);

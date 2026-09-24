@@ -355,6 +355,17 @@
       pushNotification(`Order for ${tableLabel} is ready!`);
     });
 
+    // An order filed under this waitress — e.g. the cashier entered it
+    // from her paper ticket — shows up in My Orders without a refresh.
+    socket.off('new_order').on('new_order', () => {
+      loadMyOrders();
+    });
+
+    // The manager changed the menu (price, availability, new item)
+    socket.off('menu_changed').on('menu_changed', () => {
+      loadCategories();
+    });
+
     socket.on('order_voided', ({ orderId }) => {
       const order = myOrders.find((o) => o.id === orderId);
       if (order) order.status = 'VOIDED';
@@ -498,7 +509,10 @@
 
     categories = [topItemsCategory, ...realCategories];
 
-    if (categories.length > 0) selectCategory(categories[0].id, { skipRender: true });
+    // Keep the waiter's place when this is a live menu reload
+    // (menu_changed) rather than the first load
+    const keepActive = categories.some((c) => c.id === activeCategory);
+    if (!keepActive && categories.length > 0) selectCategory(categories[0].id, { skipRender: true });
     categoryTabs.innerHTML = categories
       .map((c) => {
         const icon = CATEGORY_ICONS[c.name] || '';

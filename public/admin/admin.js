@@ -1499,6 +1499,19 @@
       renderOrdersTable();
     });
 
+    // A bill was paid at the Cashier — refresh the Orders table's paid
+    // state and the Overview's revenue numbers without a reload.
+    socket.off('orders_paid').on('orders_paid', () => {
+      if (currentDate !== todayISO()) return;
+      loadOrders();
+      loadOverview();
+    });
+
+    // Menu edited (possibly from another manager's screen)
+    socket.off('menu_changed').on('menu_changed', () => {
+      loadMenuItemsAdmin();
+    });
+
     socket.on('connect_error', (err) => {
       console.error('Socket connection error:', err.message);
     });
