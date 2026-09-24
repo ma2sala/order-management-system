@@ -2,6 +2,15 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const prisma = require('../prisma/client');
 
+// Kitchen/bar display tablets run all day, every day — a 12h login made
+// them drop to the sign-in screen mid-shift. Those roles can only view
+// tickets and mark them started/done, so they get a week; roles that
+// handle money or staff (cashier, manager) and waiters keep 12h.
+// Deactivating an account still takes effect immediately either way —
+// see the isActive check in middleware/auth.js.
+const LOGIN_DURATION_BY_ROLE = { CHEF: '7d', BARISTA: '7d' };
+const DEFAULT_LOGIN_DURATION = '12h';
+
 // POST /api/auth/login
 async function login(req, res) {
   const { email, password } = req.body;
@@ -24,7 +33,7 @@ async function login(req, res) {
     const token = jwt.sign(
       { id: user.id, name: user.name, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '12h' }
+      { expiresIn: LOGIN_DURATION_BY_ROLE[user.role] || DEFAULT_LOGIN_DURATION }
     );
 
     return res.json({

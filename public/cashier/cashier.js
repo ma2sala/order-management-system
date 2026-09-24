@@ -722,9 +722,14 @@
     // order that finished in the meantime is picked up by reloading the
     // open bills on reconnect.
     let wasDisconnected = false;
-    socket.on('disconnect', () => {
+    socket.on('disconnect', (reason) => {
       wasDisconnected = true;
       setConnectionWarning(true);
+      // The server cut this screen off on purpose (e.g. the account was
+      // deactivated) — socket.io won't retry that by itself, so retry
+      // once: a refused handshake then lands on the sign-in screen via
+      // connect_error below.
+      if (reason === 'io server disconnect') socket.connect();
     });
     socket.on('connect', () => {
       setConnectionWarning(false);

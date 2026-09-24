@@ -1,5 +1,6 @@
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
+const { verifyActiveUser } = require('./middleware/auth');
 
 let io; // module-level reference so controllers can emit without a circular import
 
@@ -9,16 +10,25 @@ function initSocket(httpServer) {
   });
 
   // Authenticate every socket connection using the same JWT as HTTP requests
-  io.use((socket, next) => {
+  // (plus the same still-active check as HTTP requests — see
+  // middleware/auth.js)
+  io.use(async (socket, next) => {
+    let payload;
     try {
       const token = socket.handshake.auth?.token;
       if (!token) return next(new Error('Unauthorized: no token'));
-
-      const payload = jwt.verify(token, process.env.JWT_SECRET);
-      socket.user = payload; // { id, name, role }
+      payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return next(new Error('Unauthorized: invalid token'));
+    }
+    try {
+      const user = await verifyActiveUser(payload);
+      if (!user) return next(new Error('Unauthorized: account no longer active'));
+      socket.user = user; // { id, name, role } — current role, not the token's
       next();
     } catch (err) {
-      next(new Error('Unauthorized: invalid token'));
+      console.error('socket auth lookup error:', err);
+      next(new Error('Server error verifying login'));
     }
   });
 
@@ -53,4 +63,14 @@ function getIO() {
   return io;
 }
 
-module.exports = { initSocket, getIO };
+// A deactivated account's screens that are already open get cut off now,
+// not on their next reconnect. Their reconnect is then refused by the
+// still-active check above, which the screens show as "login expired".
+function disconnectUser(userId) {
+  if (!io) return;
+  for (const socket of io.sockets.sockets.values()) {
+    if (socket.user && socket.user.id === userId) socket.disconnect(true);
+  }
+}
+
+module.exports = { initSocket, getIO, disconnectUser };

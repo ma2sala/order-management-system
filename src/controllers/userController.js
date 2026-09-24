@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const prisma = require('../prisma/client');
+const { disconnectUser } = require('../socket');
 
 // GET /api/users — manager only
 async function listUsers(req, res) {
@@ -108,6 +109,7 @@ async function updateUser(req, res) {
       data,
       select: { id: true, name: true, email: true, role: true, isActive: true, createdAt: true },
     });
+    if (user.isActive === false) disconnectUser(user.id);
     res.json(user);
   } catch (err) {
     if (err.code === 'P2025') return res.status(404).json({ error: 'User not found' });
