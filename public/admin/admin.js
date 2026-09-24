@@ -252,6 +252,10 @@
       const body = await res.json().catch(() => ({}));
       throw new Error(body.error || `Request failed: ${res.status}`);
     }
+    // Deletes answer "204 No Content" — there's no JSON to parse, and
+    // trying to showed "Unexpected end of JSON input" after a delete that
+    // had actually worked (menu items, stock items, stock links).
+    if (res.status === 204) return null;
     return res.json();
   }
 
