@@ -1623,7 +1623,10 @@
         <div class="cat-root">
           <div class="cat-root-header">
             <span class="cat-root-name">${escapeHtml(ROOT_LABELS[r.name] || r.name)}</span>
-            <button type="button" class="small-btn view cat-add" data-id="${r.id}" ${r.itemCount > 0 ? 'disabled title="It has items directly in it"' : ''}>＋ Add category</button>
+            <div class="cat-row-actions">
+              <button type="button" class="small-btn view cat-add" data-id="${r.id}" ${r.itemCount > 0 ? 'disabled title="It has items directly in it"' : ''}>＋ Add category</button>
+              ${r.canDelete ? `<button type="button" class="small-btn void cat-delete" data-id="${r.id}" ${r.itemCount > 0 || r.childCount > 0 ? `disabled title="Delete or move its ${r.itemCount > 0 ? 'items' : 'categories'} first"` : ''}>Delete</button>` : ''}
+            </div>
           </div>
           ${childrenOf(r.id).map(row).join('') || '<p class="cat-empty">No categories yet.</p>'}
         </div>`
@@ -1670,7 +1673,10 @@
   async function deleteCategory(id) {
     const cat = categoriesFlat.find((c) => c.id === id);
     if (!cat) return;
-    if (!confirm(`Delete the category "${cat.path}"? It's empty, so no menu items are affected.`)) return;
+    const message = cat.parentId
+      ? `Delete the category "${cat.path}"? It's empty, so no menu items are affected.`
+      : `Delete the whole "${cat.name}" section? Its tab disappears from the Waiter and Cashier screens, and it can't be added back from here (new food can go under Meals).`;
+    if (!confirm(message)) return;
     try {
       const res = await fetch(API + `/api/menu-items/categories/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) {

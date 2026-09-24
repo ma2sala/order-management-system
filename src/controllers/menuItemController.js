@@ -102,6 +102,7 @@ async function listCategoriesFlat(req, res) {
           itemCount: c._count.menuItems,
           childCount: c._count.children,
           isFixed: !c.parentId && FIXED_TOP_CATEGORIES.includes(c.name),
+          canDelete: !(!c.parentId && UNDELETABLE_TOP_CATEGORIES.includes(c.name)),
         };
       })
     );
@@ -114,8 +115,10 @@ async function listCategoriesFlat(req, res) {
 // ---------------- Category management (Manager → Menu) ----------------
 // The top-level categories decide which screen a ticket goes to (see
 // stationOf() in orderController.js: Drinks → Barista, Meals/Snacks →
-// Chef), so they're fixed — renaming or deleting one would misroute
-// orders. Everything under them can be added, renamed and deleted.
+// Chef), so none of them can be renamed — renamed food would be routed
+// to the Barista. Drinks and Meals can't be deleted either; Snacks can,
+// once it's empty (the restaurant chose to drop it — food goes under
+// Meals). Everything under them can be added, renamed and deleted.
 //
 // Categories go at most 3 levels deep (e.g. Drinks > Alcohol > Red Wine),
 // which is what the Waiter/Cashier menus can display. And a category is
@@ -123,7 +126,8 @@ async function listCategoriesFlat(req, res) {
 // those screens only show the items of the deepest level, so an item
 // sitting directly in a category that also has sub-categories would
 // silently vanish from ordering.
-const FIXED_TOP_CATEGORIES = ['Drinks', 'Meals', 'Snacks'];
+const FIXED_TOP_CATEGORIES = ['Drinks', 'Meals', 'Snacks']; // can't be renamed
+const UNDELETABLE_TOP_CATEGORIES = ['Drinks', 'Meals'];
 const MAX_CATEGORY_DEPTH = 3;
 
 async function categoryDepth(id) {
@@ -220,7 +224,7 @@ async function deleteCategory(req, res) {
       include: { _count: { select: { menuItems: true, children: true } } },
     });
     if (!category) return res.status(404).json({ error: 'Category not found' });
-    if (!category.parentId && FIXED_TOP_CATEGORIES.includes(category.name)) {
+    if (!category.parentId && UNDELETABLE_TOP_CATEGORIES.includes(category.name)) {
       return res.status(400).json({ error: `"${category.name}" can't be deleted — it decides which screen (Chef or Barista) its orders go to` });
     }
     if (category._count.children > 0) {
