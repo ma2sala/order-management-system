@@ -264,24 +264,140 @@
     });
   }
 
-  // ---------------- Screenshot preview ----------------
-  paymentScreenshotInput.addEventListener('change', () => {
-    const file = paymentScreenshotInput.files[0];
-    if (!file) {
+  // ---------------- Payment proof (uploaded screenshot or camera photo) ----------------
+  // One slot for the proof image, whichever way it was taken — this is
+  // what gets sent as `screenshot` with the payment.
+  let proofFile = null;
+
+  function setProof(file) {
+    proofFile = file || null;
+    if (screenshotPreview.src.startsWith('blob:')) URL.revokeObjectURL(screenshotPreview.src);
+    if (!proofFile) {
+      screenshotPreview.removeAttribute('src');
       screenshotPreviewWrap.classList.add('hidden');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      screenshotPreview.src = reader.result;
-      screenshotPreviewWrap.classList.remove('hidden');
-    };
-    reader.readAsDataURL(file);
+    screenshotPreview.src = URL.createObjectURL(proofFile);
+    screenshotPreviewWrap.classList.remove('hidden');
+  }
+
+  const cameraFallbackInput = document.getElementById('cameraFallbackInput');
+  document.getElementById('uploadScreenshotBtn').addEventListener('click', () => paymentScreenshotInput.click());
+  paymentScreenshotInput.addEventListener('change', () => {
+    setProof(paymentScreenshotInput.files[0]);
+    paymentScreenshotInput.value = ''; // so picking the same file again still fires 'change'
+  });
+  cameraFallbackInput.addEventListener('change', () => {
+    setProof(cameraFallbackInput.files[0]);
+    cameraFallbackInput.value = '';
   });
 
-  removeScreenshotBtn.addEventListener('click', () => {
-    paymentScreenshotInput.value = '';
-    screenshotPreviewWrap.classList.add('hidden');
+  removeScreenshotBtn.addEventListener('click', () => setProof(null));
+
+  // ---------------- Camera ----------------
+  // Live camera in the page (laptop webcam, USB camera, or a tablet's
+  // back camera). Needs HTTPS or localhost — Railway serves HTTPS. If the
+  // browser has no live-camera support, falls back to the phone's camera
+  // app via <input capture>.
+  const cameraModal = document.getElementById('cameraModal');
+  const cameraVideo = document.getElementById('cameraVideo');
+  const cameraStill = document.getElementById('cameraStill');
+  const cameraError = document.getElementById('cameraError');
+  const cameraSwitchBtn = document.getElementById('cameraSwitchBtn');
+  const cameraCaptureBtn = document.getElementById('cameraCaptureBtn');
+  const cameraRetakeBtn = document.getElementById('cameraRetakeBtn');
+  const cameraUseBtn = document.getElementById('cameraUseBtn');
+  let cameraStream = null;
+  let cameraFacing = 'environment'; // back camera first on phones/tablets
+  let capturedBlob = null;
+
+  function stopCamera() {
+    if (cameraStream) cameraStream.getTracks().forEach((t) => t.stop());
+    cameraStream = null;
+    cameraVideo.srcObject = null;
+  }
+
+  function showCameraLive() {
+    capturedBlob = null;
+    if (cameraStill.src) URL.revokeObjectURL(cameraStill.src);
+    cameraStill.classList.add('hidden');
+    cameraVideo.classList.remove('hidden');
+    cameraCaptureBtn.classList.remove('hidden');
+    cameraRetakeBtn.classList.add('hidden');
+    cameraUseBtn.classList.add('hidden');
+  }
+
+  async function startCamera() {
+    stopCamera();
+    cameraError.textContent = '';
+    try {
+      cameraStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: cameraFacing }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false,
+      });
+      cameraVideo.srcObject = cameraStream;
+      const cams = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput');
+      cameraSwitchBtn.classList.toggle('hidden', cams.length < 2);
+    } catch (err) {
+      console.error('Camera error:', err);
+      cameraError.textContent = err.name === 'NotAllowedError'
+        ? 'Camera access was blocked. Click the camera icon in the address bar and choose "Allow", then try again.'
+        : err.name === 'NotFoundError'
+          ? 'No camera found on this device. Use "Upload Screenshot" instead.'
+          : `Couldn't start the camera (${err.message || err.name}).`;
+      cameraCaptureBtn.classList.add('hidden');
+    }
+  }
+
+  document.getElementById('takePhotoBtn').addEventListener('click', () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      cameraFallbackInput.click();
+      return;
+    }
+    showCameraLive();
+    cameraModal.classList.remove('hidden');
+    startCamera();
+  });
+
+  cameraSwitchBtn.addEventListener('click', () => {
+    cameraFacing = cameraFacing === 'environment' ? 'user' : 'environment';
+    showCameraLive();
+    startCamera();
+  });
+
+  cameraCaptureBtn.addEventListener('click', () => {
+    if (!cameraVideo.videoWidth) return; // camera not ready yet
+    const canvas = document.createElement('canvas');
+    canvas.width = cameraVideo.videoWidth;
+    canvas.height = cameraVideo.videoHeight;
+    canvas.getContext('2d').drawImage(cameraVideo, 0, 0);
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      capturedBlob = blob;
+      cameraStill.src = URL.createObjectURL(blob);
+      cameraStill.classList.remove('hidden');
+      cameraVideo.classList.add('hidden');
+      cameraCaptureBtn.classList.add('hidden');
+      cameraRetakeBtn.classList.remove('hidden');
+      cameraUseBtn.classList.remove('hidden');
+    }, 'image/jpeg', 0.85);
+  });
+
+  cameraRetakeBtn.addEventListener('click', showCameraLive);
+
+  function closeCamera() {
+    stopCamera();
+    cameraModal.classList.add('hidden');
+  }
+
+  cameraUseBtn.addEventListener('click', () => {
+    if (!capturedBlob) return;
+    setProof(new File([capturedBlob], `payment-photo-${Date.now()}.jpg`, { type: 'image/jpeg' }));
+    closeCamera();
+  });
+  document.getElementById('cameraCloseBtn').addEventListener('click', closeCamera);
+  cameraModal.addEventListener('click', (e) => {
+    if (e.target === cameraModal) closeCamera();
   });
 
   // ---------------- Payment method tiles ----------------
@@ -299,8 +415,7 @@
     paymentMethodGrid.querySelectorAll('.payment-tile').forEach((t) => {
       t.classList.toggle('active', t.dataset.method === 'CASH');
     });
-    paymentScreenshotInput.value = '';
-    screenshotPreviewWrap.classList.add('hidden');
+    setProof(null);
     payError.textContent = '';
   }
 
@@ -354,8 +469,7 @@
     const formData = new FormData();
     formData.append('orderIds', JSON.stringify(orderIds));
     formData.append('paymentMethod', paymentMethod);
-    const file = paymentScreenshotInput.files[0];
-    if (file) formData.append('screenshot', file);
+    if (proofFile) formData.append('screenshot', proofFile);
 
     markPaidBtn.disabled = true;
     markPaidBtn.textContent = 'Processing…';

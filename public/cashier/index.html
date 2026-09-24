@@ -174,9 +174,16 @@
           </button>
         </div>
 
-        <label for="paymentScreenshotInput">Payment screenshot (optional)</label>
-        <input type="file" id="paymentScreenshotInput" accept="image/*" />
-        <p class="field-hint">For Telebirr/CBE/BOA — attach the customer's transaction confirmation as proof.</p>
+        <label>Payment proof photo (optional)</label>
+        <div class="proof-buttons">
+          <button type="button" id="takePhotoBtn" class="proof-btn">📷 Take Photo</button>
+          <button type="button" id="uploadScreenshotBtn" class="proof-btn">🖼 Upload Screenshot</button>
+        </div>
+        <input type="file" id="paymentScreenshotInput" accept="image/*" class="hidden" />
+        <!-- Phones/tablets without live-camera support in the browser:
+             `capture` opens the camera app directly instead -->
+        <input type="file" id="cameraFallbackInput" accept="image/*" capture="environment" class="hidden" />
+        <p class="field-hint">For Telebirr/CBE/BOA — take a photo of the customer's transaction confirmation, or upload a screenshot of it.</p>
         <div id="screenshotPreviewWrap" class="screenshot-preview-wrap hidden">
           <img id="screenshotPreview" class="screenshot-preview" alt="Payment screenshot preview" />
           <button type="button" id="removeScreenshotBtn" class="small-btn void">Remove</button>
@@ -220,6 +227,27 @@
       <p id="customizeError" class="modal-error"></p>
 
       <button type="button" id="customizeAddBtn" class="primary-btn pay-btn">Add — <span id="customizeAddTotal" class="mono">$0.00</span></button>
+    </div>
+  </div>
+
+  <!-- ---------------- Camera (photo of the transaction / receipt) ---------------- -->
+  <div id="cameraModal" class="modal-overlay camera-overlay hidden">
+    <div class="modal-card camera-card">
+      <div class="modal-header-row">
+        <h2 class="modal-title">Take Photo</h2>
+        <button type="button" id="cameraCloseBtn" class="icon-btn" aria-label="Close">✕</button>
+      </div>
+      <div class="camera-stage">
+        <video id="cameraVideo" autoplay playsinline muted></video>
+        <img id="cameraStill" class="hidden" alt="Captured photo" />
+      </div>
+      <p id="cameraError" class="modal-error"></p>
+      <div class="camera-actions">
+        <button type="button" id="cameraSwitchBtn" class="proof-btn hidden" title="Switch camera">🔄 Switch</button>
+        <button type="button" id="cameraCaptureBtn" class="primary-btn">📸 Capture</button>
+        <button type="button" id="cameraRetakeBtn" class="proof-btn hidden">↺ Retake</button>
+        <button type="button" id="cameraUseBtn" class="primary-btn hidden">✓ Use Photo</button>
+      </div>
     </div>
   </div>
 
