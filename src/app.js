@@ -37,7 +37,14 @@ function createApp() {
   // same /uploads/... URL the app already used, so no frontend/DB change
   // is needed — see UPLOAD_DIR in middleware/upload.js for the matching
   // write-side path.
-  app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+  //
+  // Only the payment-screenshots subfolder is public: the same volume
+  // also holds uploads/backups (full database copies), which must only be
+  // reachable through the manager-only /api/reports/backups routes.
+  app.use(
+    '/uploads/payment-screenshots',
+    express.static(path.join(__dirname, '..', 'uploads', 'payment-screenshots'))
+  );
 
   app.use('/api/auth', authRouter);
   app.use('/api/orders', ordersRouter);

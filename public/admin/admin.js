@@ -394,38 +394,121 @@
     loadItemsPanel();
   });
 
-  // ---------------- Backup download ----------------
-  // Railway's own database backups need a paid plan — this downloads a
-  // full copy of the data (every table, read-only) as one JSON file.
-  // See src/controllers/backupController.js.
+  // ---------------- Backups ----------------
+  // Railway's own database backups need a paid plan, so the server keeps
+  // its own: saved automatically every night at 04:00 (Addis) and on
+  // "Back up now", kept on the app's Railway volume, listed here with a
+  // download button each. "Download a fresh copy" builds one on the spot
+  // and saves it straight to this device. See backupController.js.
   const backupBtn = document.getElementById('backupBtn');
-  backupBtn.addEventListener('click', async () => {
-    backupBtn.disabled = true;
-    showToast('Preparing backup…');
+  const backupsModal = document.getElementById('backupsModal');
+  const backupsInfo = document.getElementById('backupsInfo');
+  const backupsWarning = document.getElementById('backupsWarning');
+  const backupsList = document.getElementById('backupsList');
+  const backupNowBtn = document.getElementById('backupNowBtn');
+  const backupDownloadFreshBtn = document.getElementById('backupDownloadFreshBtn');
+
+  // Fetches with the manager's login and saves the response as a file
+  async function downloadWithAuth(path, fallbackName) {
+    const res = await fetch(API + path, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error || `Download failed (${res.status})`);
+    }
+    const blob = await res.blob();
+    const match = /filename="?([^";]+)"?/.exec(res.headers.get('Content-Disposition') || '');
+    const filename = match ? match[1] : fallbackName;
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    return { filename, size: blob.size };
+  }
+
+  function formatSize(bytes) {
+    return bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  }
+
+  async function loadBackups() {
+    backupsList.innerHTML = '<p class="backups-empty">Loading…</p>';
     try {
-      const res = await fetch(API + '/api/reports/backup', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || `Backup failed (${res.status})`);
+      const data = await api('/api/reports/backups');
+      backupsInfo.textContent = `Saved automatically every night at ${data.nightlyAt} and kept for ${data.keepDays} days.`;
+      backupsWarning.classList.toggle('hidden', data.storageIsPermanent);
+      backupsWarning.textContent = '⚠ This server has no permanent storage attached — saved backups are lost on the next deploy. Download a copy to keep it.';
+      if (data.backups.length === 0) {
+        backupsList.innerHTML = '<p class="backups-empty">No backups saved yet.</p>';
+        return;
       }
-      const blob = await res.blob();
-      const match = /filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') || '');
-      const filename = match ? match[1] : 'restaurant-backup.json';
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
-      showToast(`Backup saved: ${filename} (${Math.max(1, Math.round(blob.size / 1024))} KB)`);
+      backupsList.innerHTML = data.backups
+        .map((b) => {
+          const when = new Date(b.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+          return `
+          <div class="backup-row">
+            <div class="backup-meta">
+              <span class="backup-when">${escapeHtml(when)}</span>
+              <span class="backup-sub">${b.kind === 'auto' ? 'Automatic' : 'Manual'} · ${formatSize(b.size)}</span>
+            </div>
+            <button type="button" class="small-btn view backup-download" data-name="${escapeHtml(b.name)}">⬇ Download</button>
+          </div>`;
+        })
+        .join('');
+      backupsList.querySelectorAll('.backup-download').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          btn.disabled = true;
+          try {
+            const { filename } = await downloadWithAuth(`/api/reports/backups/${encodeURIComponent(btn.dataset.name)}`, btn.dataset.name);
+            showToast(`Downloaded ${filename}`);
+          } catch (err) {
+            showToast(err.message || 'Download failed', true);
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      });
+    } catch (err) {
+      backupsList.innerHTML = `<p class="backups-empty">${escapeHtml(err.message || 'Failed to load backups')}</p>`;
+    }
+  }
+
+  backupBtn.addEventListener('click', () => {
+    backupsModal.classList.remove('hidden');
+    loadBackups();
+  });
+  document.getElementById('backupsCloseBtn').addEventListener('click', () => backupsModal.classList.add('hidden'));
+  backupsModal.addEventListener('click', (e) => {
+    if (e.target === backupsModal) backupsModal.classList.add('hidden');
+  });
+
+  backupNowBtn.addEventListener('click', async () => {
+    backupNowBtn.disabled = true;
+    backupNowBtn.textContent = 'Saving…';
+    try {
+      await api('/api/reports/backups', { method: 'POST' });
+      showToast('Backup saved on the server');
+      await loadBackups();
     } catch (err) {
       showToast(err.message || 'Backup failed', true);
     } finally {
-      backupBtn.disabled = false;
+      backupNowBtn.disabled = false;
+      backupNowBtn.textContent = '💾 Back up now';
+    }
+  });
+
+  backupDownloadFreshBtn.addEventListener('click', async () => {
+    backupDownloadFreshBtn.disabled = true;
+    showToast('Preparing backup…');
+    try {
+      const { filename, size } = await downloadWithAuth('/api/reports/backup', 'restaurant-backup.json');
+      showToast(`Backup saved: ${filename} (${formatSize(size)})`);
+    } catch (err) {
+      showToast(err.message || 'Backup failed', true);
+    } finally {
+      backupDownloadFreshBtn.disabled = false;
     }
   });
 
