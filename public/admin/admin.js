@@ -175,6 +175,35 @@
   const ordersTable = document.getElementById('ordersTable');
   const staffTable = document.getElementById('staffTable');
 
+  // ---------------- Phone layout for the data tables ----------------
+  // On a phone, the Orders/Staff/Menu/Stock/Blocked tables were wider than
+  // the screen — Total, Status and the Void/Edit/Deactivate buttons sat
+  // off the right edge. admin.css turns each row into a card under 640px,
+  // which needs every cell to know its column name (shown as a label) and
+  // its content in one wrapper. Done here once, automatically after every
+  // re-render, rather than inside each table's render function. Moving the
+  // nodes keeps any click listeners already attached to them.
+  function labelTableForPhone(container) {
+    container.querySelectorAll('table.grid').forEach((table) => {
+      const headers = [...table.querySelectorAll('thead th')].map((th) => th.textContent.trim());
+      table.querySelectorAll('tbody tr').forEach((tr) => {
+        [...tr.children].forEach((td, i) => {
+          if (td.firstElementChild && td.firstElementChild.classList.contains('cell-value')) return;
+          if (headers[i]) td.dataset.label = headers[i];
+          const wrap = document.createElement('div');
+          wrap.className = 'cell-value';
+          while (td.firstChild) wrap.appendChild(td.firstChild);
+          td.appendChild(wrap);
+        });
+      });
+    });
+  }
+  [ordersTable, staffTable, menuItemsTable, stockTable, flaggedTable].forEach((container) => {
+    if (!container) return;
+    container.classList.add('phone-cards');
+    new MutationObserver(() => labelTableForPhone(container)).observe(container, { childList: true });
+  });
+
   const itemsCategoryFilterRow = document.getElementById('itemsCategoryFilter');
   const itemsPeriodFilterRow = document.getElementById('itemsPeriodFilter');
   const itemsPeriodLabel = document.getElementById('itemsPeriodLabel');

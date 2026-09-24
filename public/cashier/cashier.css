@@ -1320,4 +1320,26 @@ body {
   .checkout-bar {
     padding: 12px 16px;
   }
+
+  /* Payment History: the desktop 5-column row is ~620px wide, so the
+     amount, View and Reprint sat off-screen. On a phone: order info on
+     top, then method + amount, then the two buttons. */
+  .history-row {
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+  }
+
+  .history-row .info {
+    grid-column: 1 / -1;
+  }
+
+  .history-row .method-cell,
+  .history-row .view-cell {
+    justify-content: flex-start;
+  }
+
+  .history-row .small-btn {
+    min-height: 38px;
+    padding: 8px 14px;
+  }
 }

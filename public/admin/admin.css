@@ -1257,3 +1257,118 @@ table.grid tr:last-child td {
   color: var(--text-muted);
   border: 1px solid var(--glass-border);
 }
+
+/* ---------------- Phones ----------------
+   The tables were wider than a phone screen, so Total / Status and the
+   Void / Edit / Deactivate buttons were off the right edge. Under 640px
+   each row of the Orders, Staff, Menu, Stock and Blocked tables becomes
+   a card: column name on the left, value on the right, action buttons
+   along the bottom. (admin.js adds the column labels — see
+   labelTableForPhone.) Computers keep the normal tables. */
+@media (max-width: 640px) {
+  .view-section {
+    padding: 14px 12px;
+  }
+
+  /* Overview numbers: two per row instead of one card per screen-row */
+  .stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 12px;
+  }
+
+  .stat-card .value {
+    font-size: 20px;
+    overflow-wrap: anywhere;
+  }
+
+  /* Items Ordered stays a table (it's a long list) — drop the Category
+     column so Quantity and Revenue fit; the item's JUICE/ALCOHOL tag
+     and the Drinks/Food filter still show the category. */
+  #itemsTable th:nth-child(2),
+  #itemsTable td:nth-child(2) {
+    display: none;
+  }
+
+  #itemsTable table.grid th,
+  #itemsTable table.grid td {
+    padding: 8px 6px;
+  }
+
+  /* Row -> card */
+  .phone-cards table.grid,
+  .phone-cards table.grid tbody,
+  .phone-cards table.grid tr,
+  .phone-cards table.grid td {
+    display: block;
+    width: 100%;
+  }
+
+  .phone-cards table.grid thead {
+    display: none;
+  }
+
+  .phone-cards table.grid tr {
+    margin-bottom: 10px;
+    padding: 4px 14px;
+    background: var(--glass-fill-light);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+  }
+
+  .phone-cards table.grid td {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--glass-border);
+  }
+
+  .phone-cards table.grid td:last-child {
+    border-bottom: none;
+  }
+
+  .phone-cards table.grid td::before {
+    content: attr(data-label);
+    flex: 0 0 34%;
+    font-family: Inter, sans-serif; /* not the mono font some columns use */
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+  }
+
+  .phone-cards table.grid td:not([data-label])::before {
+    display: none;
+  }
+
+  .phone-cards .cell-value {
+    flex: 1;
+    min-width: 0;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+
+  /* Action cell (last column): buttons spread along the card's bottom,
+     big enough to tap */
+  .phone-cards table.grid td:last-child .cell-value {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .phone-cards table.grid td:last-child .cell-value > button {
+    min-height: 38px;
+    padding: 8px 14px;
+  }
+
+  .phone-cards table.grid tr.empty-row td {
+    justify-content: center;
+    text-align: center;
+  }
+}
