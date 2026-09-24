@@ -1669,6 +1669,7 @@
     try {
       menuItemsAdmin = await api('/api/menu-items');
       renderMenuItemsTable();
+      loadCategoriesFlat(true).then(renderCategoriesTree);
       rebuildItemCategoryMap();
       renderItemsTable(lastItemsOrdered); // re-apply category tags/filter now the map is fresh
     } catch (err) {
@@ -1676,12 +1677,123 @@
     }
   }
 
-  async function loadCategoriesFlat() {
-    if (categoriesFlat.length > 0) return; // cached — categories rarely change mid-shift
+  async function loadCategoriesFlat(force) {
+    if (categoriesFlat.length > 0 && !force) return; // cached unless categories just changed
     try {
       categoriesFlat = await api('/api/menu-items/categories');
     } catch (err) {
       showToast(err.message || 'Failed to load categories', true);
+    }
+  }
+
+  // ---------------- Categories panel ----------------
+  // Add / rename / delete the sub-categories under Drinks, Meals and
+  // Snacks (those three are fixed — they route tickets to the Barista or
+  // Chef; see menuItemController.js). The server enforces every rule;
+  // the disabled buttons here just explain them up front.
+  const categoriesTree = document.getElementById('categoriesTree');
+  const ROOT_ORDER = ['Drinks', 'Meals', 'Snacks'];
+  const ROOT_LABELS = { Drinks: '🥤 Drinks → Barista', Meals: '🍽 Meals → Chef', Snacks: '🍿 Snacks → Chef' };
+
+  function categoryCountLabel(c) {
+    if (c.childCount > 0) return `${c.childCount} sub-categor${c.childCount === 1 ? 'y' : 'ies'}`;
+    return `${c.itemCount} item${c.itemCount === 1 ? '' : 's'}`;
+  }
+
+  function rootRank(c) {
+    const i = ROOT_ORDER.indexOf(c.name);
+    return i === -1 ? ROOT_ORDER.length : i;
+  }
+
+  function renderCategoriesTree() {
+    if (!categoriesTree) return;
+    const childrenOf = (id) => categoriesFlat.filter((c) => c.parentId === id).sort((a, b) => a.name.localeCompare(b.name));
+    const roots = categoriesFlat.filter((c) => !c.parentId).sort((a, b) => rootRank(a) - rootRank(b) || a.name.localeCompare(b.name));
+
+    const row = (c) => {
+      const canAddSub = c.depth < 3 && c.itemCount === 0;
+      const deleteBlock = c.childCount > 0 ? 'Delete its sub-categories first' : c.itemCount > 0 ? 'Move or delete its items first' : '';
+      const addBtn = c.depth < 3
+        ? `<button type="button" class="small-btn view cat-add" data-id="${c.id}" ${canAddSub ? '' : 'disabled title="It has items directly in it — move them into a sub-category first"'}>＋ Sub</button>`
+        : '';
+      return `
+        <div class="cat-row depth-${c.depth}" data-id="${c.id}">
+          <div class="cat-row-info">
+            <span class="cat-row-name">${escapeHtml(c.name)}</span>
+            <span class="cat-row-count">${categoryCountLabel(c)}</span>
+          </div>
+          <div class="cat-row-actions">
+            ${addBtn}
+            <button type="button" class="small-btn view cat-rename" data-id="${c.id}">Rename</button>
+            <button type="button" class="small-btn void cat-delete" data-id="${c.id}" ${deleteBlock ? `disabled title="${deleteBlock}"` : ''}>Delete</button>
+          </div>
+        </div>
+        ${childrenOf(c.id).map(row).join('')}`;
+    };
+
+    categoriesTree.innerHTML = roots
+      .map(
+        (r) => `
+        <div class="cat-root">
+          <div class="cat-root-header">
+            <span class="cat-root-name">${escapeHtml(ROOT_LABELS[r.name] || r.name)}</span>
+            <button type="button" class="small-btn view cat-add" data-id="${r.id}" ${r.itemCount > 0 ? 'disabled title="It has items directly in it"' : ''}>＋ Add category</button>
+          </div>
+          ${childrenOf(r.id).map(row).join('') || '<p class="cat-empty">No categories yet.</p>'}
+        </div>`
+      )
+      .join('');
+
+    categoriesTree.querySelectorAll('.cat-add:not(:disabled)').forEach((btn) => btn.addEventListener('click', () => addCategory(btn.dataset.id)));
+    categoriesTree.querySelectorAll('.cat-rename').forEach((btn) => btn.addEventListener('click', () => renameCategory(btn.dataset.id)));
+    categoriesTree.querySelectorAll('.cat-delete:not(:disabled)').forEach((btn) => btn.addEventListener('click', () => deleteCategory(btn.dataset.id)));
+  }
+
+  async function afterCategoryChange(message) {
+    showToast(message);
+    await loadCategoriesFlat(true);
+    renderCategoriesTree();
+    loadMenuItemsAdmin(); // item paths change when a category is renamed
+  }
+
+  async function addCategory(parentId) {
+    const parent = categoriesFlat.find((c) => c.id === parentId);
+    const name = prompt(`New category under "${parent ? parent.path : ''}":`);
+    if (name === null || !name.trim()) return;
+    try {
+      await api('/api/menu-items/categories', { method: 'POST', body: JSON.stringify({ name, parentId }) });
+      await afterCategoryChange(`Added "${name.trim()}"`);
+    } catch (err) {
+      showToast(err.message || 'Failed to add category', true);
+    }
+  }
+
+  async function renameCategory(id) {
+    const cat = categoriesFlat.find((c) => c.id === id);
+    if (!cat) return;
+    const name = prompt(`Rename "${cat.path}" to:`, cat.name);
+    if (name === null || !name.trim() || name.trim() === cat.name) return;
+    try {
+      await api(`/api/menu-items/categories/${id}`, { method: 'PATCH', body: JSON.stringify({ name }) });
+      await afterCategoryChange(`Renamed to "${name.trim()}"`);
+    } catch (err) {
+      showToast(err.message || 'Failed to rename category', true);
+    }
+  }
+
+  async function deleteCategory(id) {
+    const cat = categoriesFlat.find((c) => c.id === id);
+    if (!cat) return;
+    if (!confirm(`Delete the category "${cat.path}"? It's empty, so no menu items are affected.`)) return;
+    try {
+      const res = await fetch(API + `/api/menu-items/categories/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Delete failed (${res.status})`);
+      }
+      await afterCategoryChange(`Deleted "${cat.name}"`);
+    } catch (err) {
+      showToast(err.message || 'Failed to delete category', true);
     }
   }
 
@@ -1872,8 +1984,15 @@
     menuItemForm.reset();
     menuItemExtrasList.innerHTML = '';
 
-    await loadCategoriesFlat();
-    menuItemCategorySelect.innerHTML = categoriesFlat.map((c) => `<option value="${c.id}">${escapeHtml(c.path)}</option>`).join('');
+    await loadCategoriesFlat(true);
+    // Only the deepest level can hold items (the ordering screens don't
+    // show items of a category that has sub-categories)
+    const currentCategoryId = editingMenuItemId ? (menuItemsAdmin.find((m) => m.id === editingMenuItemId) || {}).categoryId : null;
+    menuItemCategorySelect.innerHTML = categoriesFlat
+      .filter((c) => c.childCount === 0 || c.id === currentCategoryId)
+      .sort((a, b) => a.path.localeCompare(b.path))
+      .map((c) => `<option value="${c.id}">${escapeHtml(c.path)}</option>`)
+      .join('');
 
     menuItemImageUrlInput.value = '';
     menuItemImagePreview.src = '';

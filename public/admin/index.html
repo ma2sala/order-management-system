@@ -152,6 +152,17 @@
 
     <!-- ---------------- MENU ---------------- -->
     <section id="menuMgmtView" class="view-section hidden">
+      <!-- Categories (drinks + food): add / rename / delete sub-categories.
+           Drinks, Meals and Snacks themselves are fixed — they decide
+           whether a ticket goes to the Barista or the Chef. -->
+      <div class="panel categories-panel">
+        <div class="panel-header-row">
+          <h2 class="panel-title">🗂 Categories</h2>
+        </div>
+        <p class="field-hint" style="margin-top:0;">Drinks go to the Barista screen, Meals and Snacks to the Chef. A category can only be deleted once it's empty.</p>
+        <div id="categoriesTree" class="categories-tree"></div>
+      </div>
+
       <div class="panel">
         <div class="panel-header-row">
           <h2 class="panel-title">🍽️ Menu</h2>

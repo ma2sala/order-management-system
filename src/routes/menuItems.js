@@ -6,6 +6,9 @@ const roleGuard = require('../middleware/roleGuard');
 const {
   listMenuItems,
   listCategoriesFlat,
+  createCategory,
+  renameCategory,
+  deleteCategory,
   createMenuItem,
   updateMenuItem,
   deleteMenuItem,
@@ -17,6 +20,9 @@ router.use(authenticate, roleGuard(['MANAGER']));
 // IMPORTANT: /categories must be registered before /:id so it isn't
 // swallowed by the :id param route below.
 router.get('/categories', listCategoriesFlat);
+router.post('/categories', createCategory);
+router.patch('/categories/:id', renameCategory);
+router.delete('/categories/:id', deleteCategory);
 
 router.get('/', listMenuItems);
 router.post('/', createMenuItem);
