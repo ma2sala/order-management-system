@@ -394,6 +394,41 @@
     loadItemsPanel();
   });
 
+  // ---------------- Backup download ----------------
+  // Railway's own database backups need a paid plan — this downloads a
+  // full copy of the data (every table, read-only) as one JSON file.
+  // See src/controllers/backupController.js.
+  const backupBtn = document.getElementById('backupBtn');
+  backupBtn.addEventListener('click', async () => {
+    backupBtn.disabled = true;
+    showToast('Preparing backup…');
+    try {
+      const res = await fetch(API + '/api/reports/backup', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Backup failed (${res.status})`);
+      }
+      const blob = await res.blob();
+      const match = /filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') || '');
+      const filename = match ? match[1] : 'restaurant-backup.json';
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      showToast(`Backup saved: ${filename} (${Math.max(1, Math.round(blob.size / 1024))} KB)`);
+    } catch (err) {
+      showToast(err.message || 'Backup failed', true);
+    } finally {
+      backupBtn.disabled = false;
+    }
+  });
+
   // ---------------- Category filters (Drinks / Food) ----------------
   itemsCategoryFilterRow.addEventListener('click', (e) => {
     const btn = e.target.closest('.cat-filter-btn');
