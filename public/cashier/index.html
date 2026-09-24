@@ -55,12 +55,72 @@
     </header>
 
     <div class="view-toggle">
-      <button class="toggle-btn active" data-view="bills">Open Bills</button>
+      <button class="toggle-btn active" data-view="order">New Order</button>
+      <button class="toggle-btn" data-view="bills">Open Bills</button>
       <button class="toggle-btn" data-view="history">Payment History</button>
     </div>
 
+    <!-- Food/drinks the kitchen or bar just finished — stays up until the
+         cashier has told the waitress and taps ✕, since the waitresses
+         have no screen of their own to be notified on. -->
+    <div id="readyStrip" class="ready-strip hidden"></div>
+
+    <!-- ---------------- NEW ORDER (entered from a waitress's paper ticket) ---------------- -->
+    <!-- Same 3-step flow as the waiter screen: 1 = waitress + table,
+         2 = menu, 3 = order summary / accept. -->
+    <section id="orderView" class="view-section">
+
+      <!-- STEP 1 — who and where -->
+      <div id="orderStepWho" class="order-step">
+        <p class="section-label">1 · Choose the waitress</p>
+        <div id="waiterChips" class="pick-chips"></div>
+
+        <p class="section-label">2 · Choose the table</p>
+        <div id="tableChips" class="pick-chips"></div>
+
+        <p id="orderHint" class="order-hint"></p>
+      </div>
+
+      <!-- STEP 2 — food & drinks -->
+      <div id="orderStepMenu" class="order-step hidden">
+        <div class="step-nav-row">
+          <button type="button" id="backToWhoBtn" class="secondary-btn">← Back</button>
+          <p class="ordering-for" id="orderingForMenu"></p>
+        </div>
+
+        <div id="categoryTabs" class="category-tabs"></div>
+        <div id="subCategoryTabs" class="category-tabs subcategory-tabs hidden"></div>
+        <div id="subSubCategoryTabs" class="category-tabs subcategory-tabs subsubcategory-tabs hidden"></div>
+        <div id="menuGrid" class="menu-grid"></div>
+
+        <div class="checkout-bar">
+          <span id="checkoutSummary" class="checkout-summary">0 items · $0.00</span>
+          <button type="button" id="viewOrderBtn" class="primary-btn" disabled>View Order / Checkout</button>
+        </div>
+      </div>
+
+      <!-- STEP 3 — summary & accept -->
+      <div id="orderStepCheckout" class="order-step hidden">
+        <div class="step-nav-row">
+          <button type="button" id="backToMenuBtn" class="secondary-btn">← Back to Menu</button>
+          <p class="ordering-for" id="orderingForCheckout"></p>
+        </div>
+
+        <h2 class="receipt-title display-heading">Order Summary</h2>
+        <div class="order-summary-panel">
+          <div id="basketItems" class="basket-items"></div>
+          <div class="basket-total-row">
+            <span>Total</span>
+            <span id="basketTotal" class="mono">$0.00</span>
+          </div>
+        </div>
+
+        <button type="button" id="acceptOrderBtn" class="send-btn">✅ Accept Order</button>
+      </div>
+    </section>
+
     <!-- ---------------- OPEN BILLS ---------------- -->
-    <section id="billsView" class="view-section">
+    <section id="billsView" class="view-section hidden">
       <div id="tablesGrid" class="tables-grid"></div>
     </section>
 
@@ -128,6 +188,40 @@
     </div>
   </div>
 
+  <!-- ---------------- Customize item modal (same options as the waiter screen) ---------------- -->
+  <div id="customizeModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header-row">
+        <h2 class="modal-title" id="customizeItemName">Item</h2>
+        <button type="button" id="customizeCloseBtn" class="icon-btn" aria-label="Close">✕</button>
+      </div>
+      <p class="modal-sub mono" id="customizeItemPrice"></p>
+
+      <div id="temperatureSection" class="customize-section hidden">
+        <p class="customize-label">Temperature</p>
+        <div id="temperatureOptions" class="option-row"></div>
+      </div>
+
+      <div id="ingredientGridSection" class="customize-section hidden">
+        <p class="customize-label">Ingredients</p>
+        <div id="ingredientGrid" class="ingredient-grid"></div>
+      </div>
+
+      <div class="customize-section">
+        <p class="customize-label">Quantity</p>
+        <div class="qty-controls">
+          <button type="button" id="customizeQtyMinus" class="qty-btn minus">−</button>
+          <span class="qty-value" id="customizeQtyValue">1</span>
+          <button type="button" id="customizeQtyPlus" class="qty-btn plus">+</button>
+        </div>
+      </div>
+
+      <p id="customizeError" class="modal-error"></p>
+
+      <button type="button" id="customizeAddBtn" class="primary-btn pay-btn">Add — <span id="customizeAddTotal" class="mono">$0.00</span></button>
+    </div>
+  </div>
+
   <!-- ---------------- Screenshot lightbox (view a past payment's proof) ---------------- -->
   <div id="screenshotLightbox" class="modal-overlay hidden">
     <div class="lightbox-card">
@@ -141,6 +235,7 @@
   <div id="receiptPrintArea" class="receipt-print-area"></div>
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="order-entry.js"></script>
 <script src="cashier.js"></script>
 </body>
 </html>

@@ -17,8 +17,12 @@
   const headerDateInput = document.getElementById('headerDateInput');
 
   const toggleBtns = document.querySelectorAll('.toggle-btn');
+  const orderView = document.getElementById('orderView');
   const billsView = document.getElementById('billsView');
   const historyView = document.getElementById('historyView');
+  const readyStrip = document.getElementById('readyStrip');
+
+  let orderEntry = null; // New Order tab, mounted from order-entry.js in boot()
 
   const tablesGrid = document.getElementById('tablesGrid');
   const historyList = document.getElementById('historyList');
@@ -148,6 +152,7 @@
   });
 
   refreshBtn.addEventListener('click', () => {
+    if (orderEntry) orderEntry.refresh();
     loadUnpaidOrders();
     if (!historyView.classList.contains('hidden')) loadHistory();
   });
@@ -170,6 +175,7 @@
       toggleBtns.forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
       const view = btn.dataset.view;
+      orderView.classList.toggle('hidden', view !== 'order');
       billsView.classList.toggle('hidden', view !== 'bills');
       historyView.classList.toggle('hidden', view !== 'history');
       if (view === 'bills') loadUnpaidOrders();
@@ -459,17 +465,89 @@
     if (e.target === screenshotLightbox) screenshotLightbox.classList.add('hidden');
   });
 
+  // ---------------- Ready for pickup ----------------
+  let readyItems = []; // [{ key, label, tableLabel, waiterName, time }]
+  let audioCtx = null;
+
+  // Web Audio chime, same approach as the waiter screen — no sound file
+  // to go missing. Browsers only allow audio after a click on the page,
+  // which the cashier will have made long before the first ready event.
+  function playReadyChime() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const now = audioCtx.currentTime;
+      [660, 990].forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.0001, now + i * 0.12);
+        gain.gain.exponentialRampToValueAtTime(0.2, now + i * 0.12 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.12 + 0.28);
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start(now + i * 0.12);
+        osc.stop(now + i * 0.12 + 0.3);
+      });
+    } catch (e) {
+      // Web Audio unavailable — the ready strip still shows
+    }
+  }
+
+  function addReady(entry) {
+    // A socket reconnect can replay an event — don't list it twice
+    if (readyItems.some((r) => r.key === entry.key)) return;
+    readyItems.push({ ...entry, time: new Date() });
+    playReadyChime();
+    renderReadyStrip();
+  }
+
+  function renderReadyStrip() {
+    readyStrip.classList.toggle('hidden', readyItems.length === 0);
+    readyStrip.innerHTML = readyItems
+      .map(
+        (r) => `
+        <div class="ready-chip">
+          <span class="ready-label">${escapeHtml(r.label)}</span>
+          <span class="ready-table mono">Table ${escapeHtml(r.tableLabel)}</span>
+          <span class="ready-waiter">tell ${escapeHtml(r.waiterName)}</span>
+          <span class="ready-time">${r.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+          <button type="button" class="ready-dismiss" data-key="${escapeHtml(r.key)}" aria-label="Done — waitress told" title="Done — waitress told">✕</button>
+        </div>`
+      )
+      .join('');
+    readyStrip.querySelectorAll('.ready-dismiss').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        readyItems = readyItems.filter((r) => r.key !== btn.dataset.key);
+        renderReadyStrip();
+      });
+    });
+  }
+
   // ---------------- Socket ----------------
   // Notifies the cashier the moment a table's order is fully done across
   // every station it needed (see orderController.js's updateOrderStatus
   // -> table_ready_for_checkout) — Open Bills refreshes itself instantly
   // instead of waiting for a manual refresh or the next visit to this tab.
+  //
+  // The waitresses take orders on paper and have no screen of their own,
+  // so every "ready" event also lands in the ready strip (with a chime)
+  // and stays there until the cashier has told the waitress and taps ✕ —
+  // a 3-second toast alone is too easy to miss at a busy counter.
   function connectSocket() {
     socket = io({ auth: { token } });
 
-    socket.on('table_ready_for_checkout', ({ tableLabel }) => {
+    socket.on('table_ready_for_checkout', ({ orderId, tableLabel, waiterName }) => {
+      addReady({ key: `${orderId}:all`, label: '✅ Order ready', tableLabel, waiterName });
       showToast(`Table ${tableLabel} is ready for checkout`);
       loadUnpaidOrders();
+    });
+
+    // Only one station of a mixed food + drinks order is done — the
+    // waitress can already carry that part out.
+    socket.on('station_ready', ({ orderId, station, tableLabel, waiterName }) => {
+      const label = station === 'kitchen' ? '🍽 Food ready' : '🥤 Drinks ready';
+      addReady({ key: `${orderId}:${station}`, label, tableLabel, waiterName });
     });
 
     socket.on('connect_error', (err) => {
@@ -484,6 +562,7 @@
     headerDateInput.value = todayISO();
     historyDateInput.value = todayISO();
     connectSocket();
+    if (!orderEntry) orderEntry = window.CashierOrderEntry({ api, showToast, escapeHtml, customizationSummary });
     await loadUnpaidOrders();
   }
 

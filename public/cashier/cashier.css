@@ -662,3 +662,596 @@ body {
   border: 1px solid var(--glass-border);
   border-radius: var(--glass-radius);
 }
+
+/* ---------------- Ready for pickup strip ----------------
+   Stays on screen (across all tabs) until the cashier taps ✕ — the
+   waitresses have no screen of their own, so this is their only alert. */
+.ready-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 24px 0;
+}
+
+.ready-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px 8px 14px;
+  border-radius: 999px;
+  background: rgba(51, 196, 140, 0.18);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid var(--go);
+  color: var(--paper);
+  font-size: 13px;
+  animation: readyPulse 1.2s ease-out 3;
+}
+
+.ready-label {
+  font-weight: 700;
+  color: var(--go);
+}
+
+.ready-table {
+  font-weight: 700;
+}
+
+.ready-waiter,
+.ready-time {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.ready-dismiss {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--glass-fill-light);
+  border: 1px solid var(--glass-border);
+  color: var(--text-main);
+  font-size: 12px;
+}
+
+.ready-dismiss:hover {
+  background: var(--glass-fill-hover);
+}
+
+@keyframes readyPulse {
+  0% { box-shadow: 0 0 0 0 rgba(51, 196, 140, 0.6); }
+  100% { box-shadow: 0 0 0 12px rgba(51, 196, 140, 0); }
+}
+
+/* ---------------- New Order: 3 steps, same look as the waiter screen ---------------- */
+.category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.category-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--glass-fill-light);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid var(--glass-border);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.category-pill.active {
+  background: var(--glass-fill-hover);
+  border-color: var(--paper);
+  color: var(--paper);
+}
+
+.subcategory-pill {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--glass-fill-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--wait);
+  color: var(--wait);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.subcategory-pill.active {
+  background: rgba(242, 184, 75, 0.85);
+  color: #12151a;
+  font-weight: 600;
+}
+
+.subsubcategory-pill {
+  border-color: var(--prog);
+  color: var(--prog);
+  font-size: 0.8rem;
+  padding: 5px 12px;
+}
+
+.subsubcategory-pill.active {
+  background: rgba(78, 161, 242, 0.85);
+  color: #12151a;
+}
+
+.category-load-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--glass-radius);
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.menu-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 88px;
+  padding: 14px;
+  text-align: left;
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--glass-radius);
+  transition: all 0.2s ease;
+}
+
+.menu-card:hover {
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+}
+
+.menu-card:active {
+  transform: scale(0.97);
+}
+
+.menu-card .name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--paper);
+  line-height: 1.35;
+}
+
+.menu-card .price {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.pick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.pick-chip {
+  min-width: 52px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: var(--glass-fill-light);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid var(--glass-border);
+  color: var(--paper);
+  font-weight: 700;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.pick-chip:hover {
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
+}
+
+.pick-chip.selected {
+  background: var(--accent-glass);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+
+.basket-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.basket-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.basket-item-info {
+  min-width: 0;
+}
+
+.basket-item-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--paper);
+}
+
+.basket-item-price {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.qty-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.qty-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.qty-btn.minus {
+  background: var(--glass-fill-light);
+  border: 1px solid var(--glass-border);
+  color: var(--text-main);
+}
+
+.qty-btn.plus {
+  background: var(--signal);
+  color: #fff;
+}
+
+.qty-value {
+  min-width: 20px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--paper);
+}
+
+.basket-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 2px solid var(--glass-border);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--paper);
+}
+
+/* ---------------- Customize item modal ---------------- */
+.modal-sub {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.customize-section {
+  margin-bottom: 18px;
+}
+
+.customize-label {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.option-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.option-chip {
+  padding: 9px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--glass-fill-light);
+  color: var(--text-main);
+  border: 1px solid var(--glass-border);
+  transition: all 0.2s ease;
+}
+
+.option-chip.selected {
+  background: var(--accent-glass);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.ingredient-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.ingredient-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--glass-radius);
+  background: var(--glass-fill-light);
+  border: 1px solid var(--glass-border);
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.ingredient-toggle-icon {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.ingredient-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.ingredient-card.remove-type .ingredient-toggle-icon {
+  background: rgba(122, 46, 28, 0.6);
+  color: var(--danger);
+}
+
+.ingredient-card.remove-type.included {
+  background: var(--glass-fill-hover);
+  border-color: var(--danger);
+}
+
+.ingredient-card.remove-type:not(.included) {
+  opacity: 0.5;
+}
+
+.ingredient-card.extra-type .ingredient-toggle-icon {
+  color: var(--go);
+}
+
+.ingredient-card.extra-type.selected {
+  background: rgba(51, 196, 140, 0.18);
+  border-color: var(--go);
+}
+
+.ingredient-card.extra-type.selected .ingredient-toggle-icon {
+  background: var(--go);
+  color: #fff;
+}
+
+.ingredient-card .extra-price {
+  opacity: 0.75;
+  margin-left: 4px;
+}
+
+/* ---------------- New Order steps (mirrors waiter.css) ---------------- */
+.section-label {
+  display: inline-block;
+  margin: 4px 0 12px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(15, 20, 28, 0.75);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--paper);
+}
+
+.pick-chips + .section-label {
+  margin-top: 24px;
+}
+
+/* Step 1 chips are the whole screen, so make them big and easy to hit */
+#orderStepWho .pick-chip {
+  min-width: 84px;
+  min-height: 64px;
+  padding: 10px 20px;
+  font-size: 1.05rem;
+}
+
+.order-hint {
+  min-height: 20px;
+  margin: 18px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--wait);
+}
+
+.step-nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+/* Solid pill so "Table T5 · Tigist" stays readable over the photo */
+.ordering-for {
+  margin: 0;
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: rgba(15, 20, 28, 0.75);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid var(--glass-border);
+  font-size: 0.95rem;
+  color: var(--text-main);
+}
+
+.ordering-for strong {
+  color: var(--paper);
+}
+
+.secondary-btn {
+  padding: 11px 16px;
+  border-radius: 12px;
+  background: var(--glass-fill-light);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid var(--glass-border);
+  color: var(--text-main);
+  font-weight: 700;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.secondary-btn:hover {
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
+}
+
+/* Step 2: leave room so the fixed checkout bar never covers the last row */
+#orderStepMenu .menu-grid {
+  padding-bottom: 90px;
+}
+
+.checkout-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 24px;
+  background: var(--glass-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-top: 1px solid var(--glass-border);
+  border-radius: 12px 12px 0 0;
+}
+
+.checkout-summary {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.checkout-bar .primary-btn {
+  padding: 13px 22px;
+  font-size: 14px;
+}
+
+.checkout-bar .primary-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Step 3: Order Summary */
+.receipt-title {
+  margin: 4px 0 12px;
+  font-family: var(--font-display);
+  font-size: 24px;
+  color: var(--paper);
+}
+
+.order-summary-panel {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: rgba(15, 20, 28, 0.75);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.order-summary-panel .basket-item-name,
+.order-summary-panel .basket-total-row {
+  color: #ffffff;
+}
+
+.order-summary-panel .basket-item-price,
+.order-summary-panel .item-customization {
+  color: #94a3b8;
+}
+
+.order-summary-panel .basket-total-row {
+  margin-top: 12px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.15);
+}
+
+.order-summary-panel .qty-btn.minus {
+  background: var(--paper-shadow);
+  border: none;
+  color: var(--text-paper);
+}
+
+.item-customization {
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+.send-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--accent-glass);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.send-btn:disabled {
+  opacity: 0.4;
+}
+
+.send-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+@media (max-width: 600px) {
+  .view-section,
+  .ready-strip {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .checkout-bar {
+    padding: 12px 16px;
+  }
+}

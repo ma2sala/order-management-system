@@ -15,6 +15,22 @@ async function listUsers(req, res) {
   }
 }
 
+// GET /api/users/waiters — active waitresses (id + name only), for the
+// cashier screen to pick whose paper ticket it's entering.
+async function listActiveWaiters(req, res) {
+  try {
+    const waiters = await prisma.user.findMany({
+      where: { role: 'WAITER', isActive: true },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+    res.json(waiters);
+  } catch (err) {
+    console.error('listActiveWaiters error:', err);
+    res.status(500).json({ error: 'Failed to fetch waiters' });
+  }
+}
+
 // POST /api/users — manager only, creates a new staff account
 async function createUser(req, res) {
   const { name, email, password, role } = req.body;
@@ -101,4 +117,4 @@ async function updateUser(req, res) {
   }
 }
 
-module.exports = { listUsers, createUser, updateUser };
+module.exports = { listUsers, listActiveWaiters, createUser, updateUser };

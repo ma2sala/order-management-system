@@ -32,8 +32,10 @@ router.get('/mine', roleGuard(['WAITER']), listMyOrders);
 // Manager dashboard — every order for a given day, any status
 router.get('/all', roleGuard(['MANAGER']), listAllOrdersForDay);
 
-// Waiter submits an order
-router.post('/', roleGuard(['WAITER']), createOrder);
+// Waiter submits an order — or the cashier (or a manager at the cashier
+// screen) enters one on a waitress's behalf from her paper ticket; the
+// controller then requires body.waiterId naming that waitress.
+router.post('/', roleGuard(['WAITER', 'CASHIER', 'MANAGER']), createOrder);
 
 // Barista/Chef/manager updates status — logged regardless of who calls it
 router.patch(

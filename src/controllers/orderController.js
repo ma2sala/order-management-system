@@ -78,13 +78,29 @@ function withStationsMany(orders) {
 }
 async function createOrder(req, res) {
   const { tableId, items } = req.body; // items: [{ menuItemId, quantity, notes }]
-  const waiterId = req.user.id;
+  const enteredById = req.user.id;
 
   if (!tableId || !Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: 'tableId and at least one item are required' });
   }
 
   try {
+    // A waiter's order is always her own. When the cashier (or a manager
+    // at the cashier screen) types in a waitress's paper ticket, the
+    // order is still filed under that waitress — so per-waitress reports
+    // and her ready notifications keep working — while the status log
+    // and audit log below record who actually entered it.
+    let waiterId = enteredById;
+    if (req.user.role !== 'WAITER') {
+      const waiter = req.body.waiterId
+        ? await prisma.user.findUnique({ where: { id: req.body.waiterId } })
+        : null;
+      if (!waiter || waiter.role !== 'WAITER' || !waiter.isActive) {
+        return res.status(400).json({ error: 'Pick the waitress this order is for' });
+      }
+      waiterId = waiter.id;
+    }
+
     const menuItemIds = items.map((i) => i.menuItemId);
     // Category tree included here (not just for pricing) so stationOf()
     // can determine, right now at creation time, which station(s) this
@@ -149,7 +165,7 @@ async function createOrder(req, res) {
           }),
         },
         statusLogs: {
-          create: { fromStatus: null, toStatus: 'PENDING', changedById: waiterId },
+          create: { fromStatus: null, toStatus: 'PENDING', changedById: enteredById },
         },
       },
       include: { items: { include: { menuItem: { include: MENU_ITEM_CATEGORY_TREE_INCLUDE } } }, table: true, waiter: true },
@@ -269,12 +285,31 @@ async function updateOrderStatus(req, res) {
       getIO().to(`waiter_${updated.waiterId}`).emit('status_updated', payload);
     }
 
+    // Waitresses who take orders on paper have no screen to be pinged on,
+    // so the cashier relays "go pick it up" to them. One station finishing
+    // its half of a mixed order (e.g. drinks done, food still cooking) is
+    // already worth carrying out — the whole-order case is covered by
+    // table_ready_for_checkout below, so it isn't sent twice.
+    if (status === 'COMPLETED' && existing[stationField] !== 'COMPLETED' && !justCompleted) {
+      getIO().to('cashier_channel').emit('station_ready', {
+        orderId: updated.id,
+        station,
+        tableLabel: updated.table.label,
+        waiterName: updated.waiter.name,
+      });
+    }
+
     // The order just became fully done across every station it needed —
     // hand it to the Cashier and let the waiter know the table can be
     // checked out. (justCompleted guards this so it only fires once, on
     // the actual transition, not on every later no-op re-save.)
     if (justCompleted) {
-      const readyPayload = { orderId: updated.id, tableId: updated.tableId, tableLabel: updated.table.label };
+      const readyPayload = {
+        orderId: updated.id,
+        tableId: updated.tableId,
+        tableLabel: updated.table.label,
+        waiterName: updated.waiter.name,
+      };
       getIO().to(`waiter_${updated.waiterId}`).emit('table_ready_for_checkout', readyPayload);
       getIO().to('cashier_channel').emit('table_ready_for_checkout', readyPayload);
       getIO().to('manager_channel').emit('table_ready_for_checkout', readyPayload);
