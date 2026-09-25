@@ -1,0 +1,21 @@
+{
+  "name": "Kitchen · Ebony",
+  "short_name": "Kitchen",
+  "start_url": "/chef/",
+  "scope": "/chef/",
+  "display": "standalone",
+  "background_color": "#0e1116",
+  "theme_color": "#0e1116",
+  "icons": [
+    {
+      "src": "/icons/chef-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/chef-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

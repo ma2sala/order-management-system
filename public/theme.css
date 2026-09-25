@@ -260,6 +260,19 @@ input {
   text-align: center;
 }
 
+/* ================= Phones & tablets: no auto-zoom =================
+   iPhones zoom the whole page in when you tap a text box whose text is
+   smaller than 16px — and it stays zoomed (sign-in fields were 15px, the
+   date boxes ~13px). 16px on touch screens stops that. The :not(#_)
+   only raises priority over the per-screen input styles. */
+@media (pointer: coarse) {
+  input:not(#_),
+  select:not(#_),
+  textarea:not(#_) {
+    font-size: 16px !important;
+  }
+}
+
 /* ================= Language switch (EN | አማ) =================
    Added to every header's right side and every sign-in card by i18n.js */
 .lang-toggle {

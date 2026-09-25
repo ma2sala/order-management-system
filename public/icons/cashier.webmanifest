@@ -1,0 +1,21 @@
+{
+  "name": "Cashier · Ebony",
+  "short_name": "Cashier",
+  "start_url": "/cashier/",
+  "scope": "/cashier/",
+  "display": "standalone",
+  "background_color": "#0e1116",
+  "theme_color": "#0e1116",
+  "icons": [
+    {
+      "src": "/icons/cashier-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/cashier-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
