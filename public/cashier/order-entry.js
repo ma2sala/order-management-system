@@ -315,11 +315,13 @@ window.CashierOrderEntry = function mountOrderEntry({ api, showToast, escapeHtml
       .map(
         (item) => `
         <button type="button" class="menu-card" data-id="${item.id}">
+          <span class="card-qty mono" hidden></span>
           <span class="name">${escapeHtml(item.name)}</span>
           <span class="price mono">$${Number(item.price).toFixed(2)}</span>
         </button>`
       )
       .join('');
+    updateMenuBadges();
     menuGrid.querySelectorAll('.menu-card').forEach((card) => {
       card.addEventListener('click', () => {
         const item = items.find((i) => i.id === card.dataset.id);
@@ -488,6 +490,33 @@ window.CashierOrderEntry = function mountOrderEntry({ api, showToast, escapeHtml
     if (existing) existing.quantity += line.quantity;
     else basket.push(line);
     updateTicket();
+    popMenuCard(line.menuItemId);
+  }
+
+  // ---------------- "Is it in the order?" feedback on the menu ----------------
+  // Tapping a dish used to change nothing on screen — only the total at
+  // the bottom moved. Each card now shows a gold ×N badge and border
+  // while that dish is in the order, and pops when tapped.
+  function updateMenuBadges() {
+    const qtyByItem = {};
+    basket.forEach((b) => {
+      qtyByItem[b.menuItemId] = (qtyByItem[b.menuItemId] || 0) + b.quantity;
+    });
+    menuGrid.querySelectorAll('.menu-card').forEach((card) => {
+      const qty = qtyByItem[card.dataset.id] || 0;
+      const badge = card.querySelector('.card-qty');
+      card.classList.toggle('in-order', qty > 0);
+      badge.hidden = qty === 0;
+      badge.textContent = `×${qty}`;
+    });
+  }
+
+  function popMenuCard(menuItemId) {
+    const card = menuGrid.querySelector(`.menu-card[data-id="${menuItemId}"]`);
+    if (!card) return;
+    card.classList.remove('just-added');
+    void card.offsetWidth; // restart the animation on quick repeat taps
+    card.classList.add('just-added');
   }
 
   function changeQty(key, delta) {
@@ -506,6 +535,7 @@ window.CashierOrderEntry = function mountOrderEntry({ api, showToast, escapeHtml
     const total = basketTotal();
     checkoutSummary.textContent = `${count} item${count === 1 ? '' : 's'} · $${total.toFixed(2)}`;
     viewOrderBtn.disabled = count === 0;
+    updateMenuBadges();
     if (step === 3) renderCheckoutItems();
   }
 

@@ -304,6 +304,59 @@ body {
   margin-top: 4px;
 }
 
+/* Dish already in the order: gold border + ×N badge; pops when added */
+.menu-card {
+  position: relative;
+}
+
+.menu-card.in-order {
+  border-color: #d4a756;
+  box-shadow: 0 0 0 1px rgba(212, 167, 86, 0.6), 0 6px 20px rgba(212, 167, 86, 0.18);
+}
+
+.menu-card .card-qty {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #f0cf85, #b8863a);
+  color: #1a1206;
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
+  z-index: 1;
+}
+
+.menu-card .card-qty[hidden] {
+  display: none;
+}
+
+.menu-card.just-added {
+  animation: cardPop 0.35s ease-out;
+}
+
+.menu-card.just-added .card-qty {
+  animation: badgePop 0.35s ease-out;
+}
+
+@keyframes cardPop {
+  0% { transform: scale(1); }
+  40% { transform: scale(0.94); }
+  100% { transform: scale(1); }
+}
+
+@keyframes badgePop {
+  0% { transform: scale(0.4); }
+  60% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
 .add-btn {
   align-self: flex-end;
   margin-top: 8px;

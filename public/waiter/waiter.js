@@ -643,7 +643,8 @@
     menuGrid.innerHTML = items
       .map(
         (item) => `
-        <div class="menu-card">
+        <div class="menu-card" data-id="${item.id}">
+          <span class="card-qty mono" hidden></span>
           <div>
             <div class="name">${escapeHtml(item.name)}</div>
             <div class="price mono">$${Number(item.price).toFixed(2)}</div>
@@ -652,6 +653,7 @@
         </div>`
       )
       .join('');
+    updateMenuBadges();
 
     menuGrid.querySelectorAll('.add-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -843,6 +845,33 @@
       basket.push(line);
     }
     updateBasketUI();
+    popMenuCard(line.menuItemId);
+  }
+
+  // ---------------- "Is it in the order?" feedback on the menu ----------------
+  // Tapping + used to change nothing on the card — only the total at the
+  // bottom moved. A dish in the order now shows a gold ×N badge and
+  // border, and pops when added (same as the Cashier's New Order menu).
+  function updateMenuBadges() {
+    const qtyByItem = {};
+    basket.forEach((b) => {
+      qtyByItem[b.menuItemId] = (qtyByItem[b.menuItemId] || 0) + b.quantity;
+    });
+    menuGrid.querySelectorAll('.menu-card').forEach((card) => {
+      const qty = qtyByItem[card.dataset.id] || 0;
+      const badge = card.querySelector('.card-qty');
+      card.classList.toggle('in-order', qty > 0);
+      badge.hidden = qty === 0;
+      badge.textContent = `×${qty}`;
+    });
+  }
+
+  function popMenuCard(menuItemId) {
+    const card = menuGrid.querySelector(`.menu-card[data-id="${menuItemId}"]`);
+    if (!card) return;
+    card.classList.remove('just-added');
+    void card.offsetWidth; // restart the animation on quick repeat taps
+    card.classList.add('just-added');
   }
 
   function changeQty(key, delta) {
@@ -868,6 +897,7 @@
 
     checkoutSummary.textContent = `${count} item${count === 1 ? '' : 's'} · $${total.toFixed(2)}`;
     viewOrderBtn.disabled = count === 0;
+    updateMenuBadges();
 
     if (step === 3) {
       renderCheckoutItems();
