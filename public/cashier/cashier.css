@@ -1318,6 +1318,12 @@ body {
 @media (max-width: 700px) {
   .app-header.brand-header {
     grid-template-columns: auto minmax(0, 1fr) auto auto;
+    column-gap: 8px;
+  }
+
+  .app-header.brand-header .icon-btn {
+    width: 40px;
+    height: 40px;
   }
 
   .app-header.brand-header > .brand-slot-right {
@@ -1327,6 +1333,12 @@ body {
   .app-header.brand-header > .brand-slot-left {
     grid-column: 1 / 3;
     grid-row: 2;
+  }
+
+  .app-header.brand-header .lang-toggle {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
   }
 
   .app-header.brand-header #refreshBtn {

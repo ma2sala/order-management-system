@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:wght@700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:wght@700;800&family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Ethiopic:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
 
 :root {
   --ink: #0e1116;
@@ -18,9 +18,9 @@
   --text-main: #f3ecd8;
   --text-muted: #8791a0;
 
-  --font-display: 'Bebas Neue', sans-serif;
-  --font-body: 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-display: 'Bebas Neue', 'Noto Sans Ethiopic', sans-serif;
+  --font-body: 'Inter', 'Noto Sans Ethiopic', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Noto Sans Ethiopic', monospace;
 
   --glass-fill: rgba(18, 24, 38, 0.55);
   --glass-fill-light: rgba(255, 255, 255, 0.08);
@@ -258,6 +258,74 @@ input {
 
 .login-card .brand + p.subtitle {
   text-align: center;
+}
+
+/* ================= Language switch (EN | አማ) =================
+   Added to every header's right side and every sign-in card by i18n.js */
+.lang-toggle {
+  display: inline-flex;
+  flex-shrink: 0;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(212, 167, 86, 0.55);
+}
+
+.lang-toggle button {
+  min-width: 40px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: transparent;
+  border: none;
+  color: rgba(243, 236, 216, 0.7);
+  font-family: 'Inter', 'Noto Sans Ethiopic', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lang-toggle button.active {
+  background: linear-gradient(180deg, #f0cf85, #b8863a);
+  color: #1a1206;
+}
+
+/* Phones: headers are tight — a slimmer switch, and the header buttons
+   stay on one line next to the logo instead of wrapping underneath */
+@media (max-width: 700px) {
+  .brand-header .lang-toggle button {
+    min-width: 32px;
+    padding: 6px 7px;
+    font-size: 12px;
+  }
+
+  .brand-header > .brand-slot-right {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .brand-header > .brand-slot-right .icon-btn {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+.login-card {
+  position: relative;
+}
+
+.login-card > .lang-toggle {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+/* Ethiopic script reads better without the wide letter-spacing the
+   English uppercase labels use */
+.lang-am .brand-role {
+  letter-spacing: 0.08em;
+  padding-left: 0.08em;
 }
 
 /* Header layout: [left: date/status] [centered brand] [right: buttons] */
