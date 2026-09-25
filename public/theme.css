@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:wght@700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
 
 :root {
   --ink: #0e1116;
@@ -188,6 +188,133 @@ input {
   margin: 0 0 20px;
   color: var(--text-muted);
   font-size: 13px;
+}
+
+/* ================= Ebony brand =================
+   The restaurant's wordmark — "Ebony" in a gold serif with the screen's
+   name underneath (e.g. "— CASHIER —"). Used centered in every screen's
+   header (.brand-header) and, larger, on every sign-in card. */
+.brand {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  line-height: 1;
+  user-select: none;
+}
+
+.brand-name {
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-weight: 800;
+  font-size: 38px;
+  letter-spacing: 0.01em;
+  padding: 0 2px 2px; /* keeps the gradient from clipping the descender of "y" */
+  background: linear-gradient(180deg, #fbe9b2 0%, #e2b866 42%, #b8863a 72%, #8a5f22 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+}
+
+.brand-role {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: rgba(243, 236, 216, 0.78);
+  padding-left: 0.34em; /* balances the trailing letter-spacing so it centers */
+}
+
+/* thin gold rules either side of the screen name */
+.brand-role::before,
+.brand-role::after {
+  content: '';
+  width: 18px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #d4a756);
+}
+
+.brand-role::after {
+  background: linear-gradient(90deg, #d4a756, transparent);
+}
+
+.login-card .brand {
+  display: flex;
+  margin: 0 auto 6px;
+}
+
+.login-card .brand-name {
+  font-size: 52px;
+}
+
+.login-card .brand-role {
+  font-size: 11px;
+}
+
+.login-card .brand + p.subtitle {
+  text-align: center;
+}
+
+/* Header layout: [left: date/status] [centered brand] [right: buttons] */
+.brand-header {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-header > .brand-slot-left {
+  justify-self: start;
+  min-width: 0;
+}
+
+.brand-header > .brand {
+  justify-self: center;
+}
+
+.brand-header > .brand-slot-right {
+  justify-self: end;
+}
+
+/* Phones: brand + buttons on the first row, the rest below */
+@media (max-width: 700px) {
+  .brand-header {
+    grid-template-columns: auto minmax(0, 1fr);
+    row-gap: 8px;
+  }
+
+  .brand-header > .brand {
+    grid-column: 1;
+    grid-row: 1;
+    align-items: flex-start;
+  }
+
+  .brand-header > .brand-slot-right {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .brand-header > .brand-slot-left {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .brand-header .brand-name {
+    font-size: 30px;
+  }
+
+  .brand-header .brand-role {
+    font-size: 9px;
+  }
+
+  .brand-header .brand-role::before {
+    display: none;
+  }
 }
 
 .login-card label {

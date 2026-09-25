@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Cashier Dashboard</title>
+<title>Cashier · Ebony</title>
 <link rel="icon" type="image/svg+xml" href="/icons/cashier.svg" />
 <link rel="stylesheet" href="/theme.css" />
 <link rel="stylesheet" href="cashier.css" />
@@ -13,7 +13,7 @@
   <!-- ================= LOGIN ================= -->
   <div id="loginScreen" class="login-screen">
     <div class="login-card">
-      <h1>CASHIER</h1>
+      <h1 class="brand"><span class="brand-name">Ebony</span><span class="brand-role">Cashier</span></h1>
       <p class="subtitle">Cashier / Manager sign in</p>
 
       <form id="loginForm">
@@ -36,15 +36,12 @@
   <!-- ================= MAIN APP ================= -->
   <div id="appScreen" class="hidden">
 
-    <header class="app-header">
-      <div class="header-left">
-        <span class="icon">💵</span>
-        <div>
-          <h1 class="display-heading app-title">CASHIER</h1>
-          <p class="app-subtitle" id="dateDisplay"></p>
-        </div>
+    <header class="app-header brand-header">
+      <div class="header-left brand-slot-left">
+        <p class="app-subtitle" id="dateDisplay"></p>
       </div>
-      <div class="header-right">
+      <h1 class="brand"><span class="brand-name">Ebony</span><span class="brand-role">Cashier</span></h1>
+      <div class="header-right brand-slot-right">
         <input type="date" id="headerDateInput" class="date-input" title="Filter by date" />
         <button id="refreshBtn" class="icon-btn" title="Refresh">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3.14-6.36L21 8"></path><path d="M21 3v5h-5"></path></svg>
