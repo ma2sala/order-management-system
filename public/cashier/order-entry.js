@@ -21,6 +21,7 @@ window.CashierOrderEntry = function mountOrderEntry({ api, showToast, escapeHtml
   let waiters = [];
   let tables = [];
   let categories = [];
+  let rootNameByCategory = {}; // category id -> 'Drinks' / 'Meals' (for picture placeholders)
   let activeCategory = null;
   let activeSubCategory = null;
   let activeSubSubCategory = null;
@@ -200,6 +201,15 @@ window.CashierOrderEntry = function mountOrderEntry({ api, showToast, escapeHtml
     const topItemsCategory = { id: '__top_items__', name: 'Top Items', menuItems: collectFeaturedItems(realCategories), children: [] };
     categories = [topItemsCategory, ...realCategories];
 
+    // Which top-level section each category is in — picks the 🥤 / 🍽
+    // placeholder for dishes without a picture (see menuCardPicture)
+    rootNameByCategory = {};
+    const walk = (node, rootName) => {
+      rootNameByCategory[node.id] = rootName;
+      (node.children || []).forEach((child) => walk(child, rootName));
+    };
+    realCategories.forEach((root) => walk(root, root.name));
+
     // Keep the cashier's place in the menu across a refresh when possible
     const keep = categories.some((c) => c.id === activeCategory);
     if (!keep && categories.length > 0) selectCategory(categories[0].id, { skipRender: true });
@@ -316,11 +326,22 @@ window.CashierOrderEntry = function mountOrderEntry({ api, showToast, escapeHtml
         (item) => `
         <button type="button" class="menu-card" data-id="${item.id}">
           <span class="card-qty mono" hidden></span>
+          ${menuCardPicture(item)}
           <span class="name">${escapeHtml(item.name)}</span>
           <span class="price mono">$${Number(item.price).toFixed(2)}</span>
         </button>`
       )
       .join('');
+    // A picture link that doesn't load (moved, typo) shows the placeholder
+    // instead of a broken-image icon
+    menuGrid.querySelectorAll('img.card-img').forEach((img) => {
+      img.addEventListener('error', () => {
+        const fallback = document.createElement('span');
+        fallback.className = 'card-img card-img-fallback';
+        fallback.textContent = img.dataset.fallback;
+        img.replaceWith(fallback);
+      });
+    });
     updateMenuBadges();
     menuGrid.querySelectorAll('.menu-card').forEach((card) => {
       card.addEventListener('click', () => {
@@ -491,6 +512,16 @@ window.CashierOrderEntry = function mountOrderEntry({ api, showToast, escapeHtml
     else basket.push(line);
     updateTicket();
     popMenuCard(line.menuItemId);
+  }
+
+  // ---------------- Dish pictures ----------------
+  // The picture link set in Manager → Menu (imageUrl) on top of the card;
+  // dishes without one get a 🥤 / 🍽 placeholder so all cards match.
+  function menuCardPicture(item) {
+    const icon = rootNameByCategory[item.categoryId] === 'Drinks' ? '🥤' : '🍽';
+    if (!item.imageUrl) return `<span class="card-img card-img-fallback">${icon}</span>`;
+    const src = escapeHtml(item.imageUrl).replace(/"/g, '&quot;');
+    return `<img class="card-img" src="${src}" alt="" loading="lazy" data-fallback="${icon}" />`;
   }
 
   // ---------------- "Is it in the order?" feedback on the menu ----------------

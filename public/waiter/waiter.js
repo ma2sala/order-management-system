@@ -86,6 +86,7 @@
 
   let tables = [];
   let categories = [];
+  let rootNameByCategory = {}; // category id -> 'Drinks' / 'Meals' (for picture placeholders)
   let activeCategory = null; // top-level category id
   let activeSubCategory = null; // child category id, when the active category has children
   let activeSubSubCategory = null; // grandchild category id, e.g. a wine/spirit type under Alcohol
@@ -509,6 +510,15 @@
 
     categories = [topItemsCategory, ...realCategories];
 
+    // Which top-level section each category is in — picks the 🥤 / 🍽
+    // placeholder for dishes without a picture (see menuCardPicture)
+    rootNameByCategory = {};
+    const walk = (node, rootName) => {
+      rootNameByCategory[node.id] = rootName;
+      (node.children || []).forEach((child) => walk(child, rootName));
+    };
+    realCategories.forEach((root) => walk(root, root.name));
+
     // Keep the waiter's place when this is a live menu reload
     // (menu_changed) rather than the first load
     const keepActive = categories.some((c) => c.id === activeCategory);
@@ -645,6 +655,7 @@
         (item) => `
         <div class="menu-card" data-id="${item.id}">
           <span class="card-qty mono" hidden></span>
+          ${menuCardPicture(item)}
           <div>
             <div class="name">${escapeHtml(item.name)}</div>
             <div class="price mono">$${Number(item.price).toFixed(2)}</div>
@@ -653,6 +664,16 @@
         </div>`
       )
       .join('');
+    // A picture link that doesn't load (moved, typo) shows the placeholder
+    // instead of a broken-image icon
+    menuGrid.querySelectorAll('img.card-img').forEach((img) => {
+      img.addEventListener('error', () => {
+        const fallback = document.createElement('span');
+        fallback.className = 'card-img card-img-fallback';
+        fallback.textContent = img.dataset.fallback;
+        img.replaceWith(fallback);
+      });
+    });
     updateMenuBadges();
 
     menuGrid.querySelectorAll('.add-btn').forEach((btn) => {
@@ -846,6 +867,16 @@
     }
     updateBasketUI();
     popMenuCard(line.menuItemId);
+  }
+
+  // ---------------- Dish pictures ----------------
+  // The picture link set in Manager → Menu (imageUrl) on top of the card;
+  // dishes without one get a 🥤 / 🍽 placeholder so all cards match.
+  function menuCardPicture(item) {
+    const icon = rootNameByCategory[item.categoryId] === 'Drinks' ? '🥤' : '🍽';
+    if (!item.imageUrl) return `<span class="card-img card-img-fallback">${icon}</span>`;
+    const src = escapeHtml(item.imageUrl).replace(/"/g, '&quot;');
+    return `<img class="card-img" src="${src}" alt="" loading="lazy" data-fallback="${icon}" />`;
   }
 
   // ---------------- "Is it in the order?" feedback on the menu ----------------
