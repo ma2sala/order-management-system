@@ -536,6 +536,30 @@ table.grid tr:last-child td {
   margin-top: 18px;
 }
 
+/* ---- Tall forms (e.g. Add Menu Item) must fit the screen ----
+   The card had no height limit, so a long form grew past the screen and,
+   being centered, was cut off top and bottom with no way to scroll — the
+   Add Item / Cancel buttons were unreachable without zooming out. The
+   card now never exceeds the screen and scrolls inside itself, and its
+   buttons stay pinned to the bottom edge of the card. */
+.modal-card {
+  max-height: calc(100vh - 40px); /* 20px overlay padding top + bottom */
+  max-height: calc(100dvh - 40px); /* phones: excludes the browser bars */
+  overflow-y: auto;
+  overscroll-behavior: contain; /* scrolling the form doesn't scroll the page behind */
+}
+
+.modal-card .modal-actions {
+  position: sticky;
+  bottom: -24px; /* the card's bottom padding */
+  z-index: 2;
+  margin: 18px -24px -24px;
+  padding: 14px 24px 24px;
+  background: rgba(16, 20, 30, 0.97);
+  border-top: 1px solid var(--glass-border);
+  border-radius: 0 0 16px 16px;
+}
+
 .modal-actions button {
   flex: 1;
 }
