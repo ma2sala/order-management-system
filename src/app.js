@@ -46,6 +46,11 @@ function createApp() {
     express.static(path.join(__dirname, '..', 'uploads', 'payment-screenshots'))
   );
 
+  // Public, no login — for uptime checks. Must stay ABOVE the catalog
+  // router: that one is mounted on all of /api and requires a login for
+  // every path that reaches it, which made this return 401.
+  app.get('/api/health', (req, res) => res.json({ ok: true }));
+
   app.use('/api/auth', authRouter);
   app.use('/api/orders', ordersRouter);
   app.use('/api', catalogRouter); // /api/tables, /api/categories
@@ -54,8 +59,6 @@ function createApp() {
   app.use('/api/stock', stockRouter);
   app.use('/api/menu-items', menuItemsRouter);
   app.use('/api/payments', paymentsRouter);
-
-  app.get('/api/health', (req, res) => res.json({ ok: true }));
 
   // Fallback error handler
   app.use((err, req, res, next) => {
