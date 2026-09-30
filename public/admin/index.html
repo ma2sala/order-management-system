@@ -266,6 +266,18 @@
     </div>
   </div>
 
+  <!-- ---------------- Voided orders modal (opened from Overview's "Orders Voided" card) ---------------- -->
+  <div id="voidedModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="voidedModalTitle">
+    <div class="modal-card voided-modal-card">
+      <div class="details-header-row">
+        <h2 class="modal-title" id="voidedModalTitle">Voided Orders</h2>
+        <button type="button" id="voidedCloseBtn" class="icon-btn" aria-label="Close">✕</button>
+      </div>
+      <p class="modal-sub" id="voidedModalSub"></p>
+      <div id="voidedBody"></div>
+    </div>
+  </div>
+
   <!-- ---------------- Receipt preview modal ---------------- -->
   <div id="receiptModal" class="modal-overlay hidden">
     <div class="modal-card">

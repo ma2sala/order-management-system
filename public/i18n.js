@@ -248,6 +248,9 @@
     'Stock': 'ክምችት',
     'Orders Placed': 'የተሰጡ ትዕዛዞች',
     'Orders Voided': 'የተሰረዙ ትዕዛዞች',
+    'Voided Orders': 'የተሰረዙ ትዕዛዞች',
+    'No orders were voided on this day.': 'በዚህ ቀን የተሰረዘ ትዕዛዝ የለም።',
+    'Failed to load voided orders': 'የተሰረዙ ትዕዛዞችን መጫን አልተቻለም',
     'Revenue (Live)': 'ገቢ (ቀጥታ)',
     'Revenue (Logged)': 'ገቢ (የተመዘገበ)',
     'Reconciled': 'ማመሳከሪያ',
@@ -438,6 +441,7 @@
     [/^\+ ?(.+)$/, (x) => `+ ${tx(x)}`], // "+ Link", or an added extra (a name — kept)
     [/^(\d+) items? · \$([\d.,]+)$/, (n, p) => `${n} ዕቃ · $${p}`],
     [/^(\d+) items?$/, (n) => `${n} ዕቃ`],
+    [/^Total voided \((\d+)\)$/, (n) => `ጠቅላላ የተሰረዙ (${n})`],
     [/^(\d+) sub-categor(?:y|ies)$/, (n) => `${n} ንዑስ ምድብ`],
     [/^\$([\d.,]+) each$/, (p) => `አንዱ $${p}`],
     [/^\$([\d.,]+) base$/, (p) => `መነሻ $${p}`],

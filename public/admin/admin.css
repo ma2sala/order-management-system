@@ -232,6 +232,50 @@ body {
   margin: 0;
 }
 
+/* Clickable stat card (Orders Voided) — a real <button>, so reset the
+   browser's button look and keep it identical to the other cards. */
+button.stat-card {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  position: relative;
+}
+
+.stat-card-btn:not(:disabled) {
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.stat-card-btn:not(:disabled):hover {
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-2px);
+}
+
+.stat-card-btn:focus-visible {
+  outline: 2px solid var(--wait);
+  outline-offset: 2px;
+}
+
+.stat-card-btn:disabled {
+  cursor: default;
+}
+
+.stat-card .card-hint {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
+.stat-card-btn:not(:disabled):hover .card-hint {
+  color: var(--paper);
+}
+
 .stat-card.warn .value {
   color: var(--wait);
 }
@@ -689,6 +733,42 @@ table.grid tr:last-child td {
   font-weight: 700;
   color: var(--danger);
   font-size: 13px;
+}
+
+/* ---------------- Voided orders modal ---------------- */
+.voided-modal-card {
+  max-width: 560px;
+}
+
+.voided-order {
+  padding: 14px;
+  margin-top: 12px;
+  border-radius: 12px;
+  background: var(--glass-fill-light);
+  border: 1px solid var(--glass-border);
+}
+
+.voided-order-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.voided-order-head .mono {
+  font-weight: 700;
+  color: var(--paper);
+}
+
+.voided-order .void-info-box {
+  margin-top: 10px;
+}
+
+.voided-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 30px 0;
 }
 
 /* ---------------- Category filter (Drinks / Food) ---------------- */

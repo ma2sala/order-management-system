@@ -410,17 +410,39 @@ async function listMyOrders(req, res) {
   }
 }
 
-// GET /api/orders/all?date=YYYY-MM-DD — every order for a given day
-// (pending, in progress, completed, and voided) — manager dashboard only.
+// Only what the dashboard shows about a staff member — never their email
+// or password hash.
+const STAFF_SUMMARY = { select: { id: true, name: true, role: true } };
+
+// GET /api/orders/all?date=YYYY-MM-DD[&status=VOIDED] — every order for a
+// given day (pending, in progress, completed, and voided) — manager
+// dashboard only. Optional ?status= narrows it to one status (the
+// Overview's "Orders Voided" card uses status=VOIDED).
 async function listAllOrdersForDay(req, res) {
   try {
     const dateParam = req.query.date;
     const dayStart = addisDayStart(dateParam);
     const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
 
+    const where = { createdAt: { gte: dayStart, lt: dayEnd } };
+    const statusParam = req.query.status;
+    if (statusParam) {
+      const VALID_STATUSES = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'VOIDED'];
+      if (!VALID_STATUSES.includes(statusParam)) {
+        return res.status(400).json({ error: `status must be one of ${VALID_STATUSES.join(', ')}` });
+      }
+      where.status = statusParam;
+    }
+
     const orders = await prisma.order.findMany({
-      where: { createdAt: { gte: dayStart, lt: dayEnd } },
-      include: { items: { include: { menuItem: true } }, table: true, waiter: true, voidedBy: true, cashier: true },
+      where,
+      include: {
+        items: { include: { menuItem: true } },
+        table: true,
+        waiter: STAFF_SUMMARY,
+        voidedBy: STAFF_SUMMARY,
+        cashier: STAFF_SUMMARY,
+      },
       orderBy: { createdAt: 'desc' },
     });
 

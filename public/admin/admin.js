@@ -555,7 +555,12 @@
     const s = report.summary;
     const cards = [
       { label: 'Orders Placed', value: s.ordersPlaced },
-      { label: 'Orders Voided', value: s.ordersVoided, tone: s.ordersVoided > 0 ? 'warn' : '' },
+      {
+        label: 'Orders Voided',
+        value: s.ordersVoided,
+        tone: s.ordersVoided > 0 ? 'warn' : '',
+        id: 'voidedCardBtn', // clickable — opens the Voided Orders list
+      },
       { label: 'Revenue (Live)', value: `$${s.liveRevenue.toFixed(2)}` },
       { label: 'Revenue (Logged)', value: `$${s.loggedRevenue.toFixed(2)}` },
       {
@@ -571,15 +576,125 @@
     ];
 
     statGrid.innerHTML = cards
-      .map(
-        (c) => `
+      .map((c) => {
+        if (c.id === 'voidedCardBtn') {
+          // A real <button> (keyboard + screen-reader friendly). Disabled
+          // when there's nothing to show.
+          const none = !c.value;
+          return `
+        <button type="button" id="voidedCardBtn" class="stat-card stat-card-btn ${c.tone || ''}"
+          aria-haspopup="dialog" ${none ? 'disabled' : ''}
+          aria-label="Orders voided: ${c.value}${none ? '' : '. View voided orders'}">
+          <p class="label">${c.label}</p>
+          <p class="value">${c.value}</p>
+          ${none ? '' : '<span class="card-hint" aria-hidden="true">View ›</span>'}
+        </button>`;
+        }
+        return `
         <div class="stat-card ${c.tone || ''}">
           <p class="label">${c.label}</p>
           <p class="value">${c.value}</p>
-        </div>`
-      )
+        </div>`;
+      })
       .join('');
+
+    const voidedCardBtn = document.getElementById('voidedCardBtn');
+    if (voidedCardBtn) voidedCardBtn.addEventListener('click', openVoidedModal);
   }
+
+  // ---------------- Voided orders modal ----------------
+  // Always fetched fresh for the selected date: the live socket patch only
+  // knows an order was voided, not who voided it or why.
+  const voidedModal = document.getElementById('voidedModal');
+  const voidedModalSub = document.getElementById('voidedModalSub');
+  const voidedBody = document.getElementById('voidedBody');
+  const voidedCloseBtn = document.getElementById('voidedCloseBtn');
+
+  async function openVoidedModal() {
+    const date = currentDate;
+    voidedModalSub.textContent = new Date(`${date}T12:00:00`).toLocaleDateString(undefined, {
+      weekday: 'long',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    voidedBody.innerHTML = '<p class="voided-empty">Loading…</p>';
+    voidedModal.classList.remove('hidden');
+    voidedCloseBtn.focus();
+
+    try {
+      const orders = await api(`/api/orders/all?date=${date}&status=VOIDED`);
+      if (date !== currentDate || voidedModal.classList.contains('hidden')) return; // date changed / closed meanwhile
+      renderVoidedOrders(orders);
+    } catch (err) {
+      voidedBody.innerHTML = `<p class="voided-empty">${escapeHtml(err.message || 'Failed to load voided orders')}</p>`;
+    }
+  }
+
+  function renderVoidedOrders(orders) {
+    if (orders.length === 0) {
+      voidedBody.innerHTML = '<p class="voided-empty">No orders were voided on this day.</p>';
+      return;
+    }
+
+    const grandTotal = orders.reduce((s, o) => s + o.items.reduce((t, i) => t + lineTotal(i), 0), 0);
+
+    voidedBody.innerHTML =
+      orders
+        .map((o) => {
+          const total = o.items.reduce((s, i) => s + lineTotal(i), 0);
+          return `
+        <div class="voided-order">
+          <div class="voided-order-head">
+            <span class="mono">#${o.id.slice(0, 6).toUpperCase()} · Table ${escapeHtml(o.table.label)}</span>
+            <span class="mono">$${total.toFixed(2)}</span>
+          </div>
+          <div class="details-row"><span class="details-label">Waiter</span><span>${escapeHtml(o.waiter?.name || 'Unknown')}</span></div>
+          <div class="details-row"><span class="details-label">Placed</span><span>${new Date(o.createdAt).toLocaleTimeString()}</span></div>
+
+          <div class="details-divider"></div>
+          ${o.items
+            .map((it) => {
+              const summary = itemCustomizationSummary(it);
+              return `
+            <div class="details-item">
+              <div class="details-item-top">
+                <span>${it.quantity}× ${escapeHtml(it.menuItem.name)}</span>
+                <span class="mono">$${lineTotal(it).toFixed(2)}</span>
+              </div>
+              ${summary ? `<div class="details-item-custom">${escapeHtml(summary)}</div>` : ''}
+            </div>`;
+            })
+            .join('')}
+
+          <div class="void-info-box">
+            <p class="void-info-title">⛔ Voided</p>
+            <div class="details-row"><span class="details-label">Voided by</span><span>${escapeHtml(o.voidedBy?.name || 'Unknown')}</span></div>
+            <div class="details-row"><span class="details-label">Reason</span><span>${escapeHtml(o.voidReason || 'No reason given')}</span></div>
+            <div class="details-row"><span class="details-label">Voided at</span><span>${o.voidedAt ? new Date(o.voidedAt).toLocaleTimeString() : '—'}</span></div>
+          </div>
+        </div>`;
+        })
+        .join('') +
+      `<div class="details-divider"></div>
+      <div class="details-row details-total">
+        <span>Total voided (${orders.length})</span>
+        <span class="mono">$${grandTotal.toFixed(2)}</span>
+      </div>`;
+  }
+
+  function closeVoidedModal() {
+    voidedModal.classList.add('hidden');
+    const btn = document.getElementById('voidedCardBtn');
+    if (btn) btn.focus(); // return focus to the card that opened it
+  }
+  voidedCloseBtn.addEventListener('click', closeVoidedModal);
+  voidedModal.addEventListener('click', (e) => {
+    if (e.target === voidedModal) closeVoidedModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !voidedModal.classList.contains('hidden')) closeVoidedModal();
+  });
 
   function renderItemsTable(items) {
     let filtered =
