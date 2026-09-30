@@ -59,6 +59,14 @@ function createApp() {
 
   // Fallback error handler
   app.use((err, req, res, next) => {
+    // The phone dropped its connection mid-upload (usually a payment
+    // screenshot on weak mobile data). multer has already deleted the
+    // partial file and nothing was saved; the phone is gone, so there's
+    // no one to send a response to — just note it and move on.
+    if (err && (err.message === 'Request aborted' || err.message === 'Request closed')) {
+      console.warn(`[upload] ${req.method} ${req.originalUrl} cancelled — client disconnected mid-upload (nothing saved)`);
+      return;
+    }
     // multer surfaces file-size/type problems (e.g. a non-image payment
     // screenshot) as an error passed to next() rather than a thrown
     // exception a controller's try/catch would see — handle those here

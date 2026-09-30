@@ -211,6 +211,8 @@
     'Mark Paid & Print Receipt': 'ተከፍሏል — ደረሰኝ አትም',
     'Payment recorded': 'ክፍያው ተመዝግቧል',
     'Failed to record payment': 'ክፍያውን መመዝገብ አልተቻለም',
+    'Connection lost. Refresh — if this bill is still in Open Bills, take the payment again.':
+      'ግንኙነቱ ተቋርጧል። ያድሱ — ሂሳቡ አሁንም ያልተከፈሉ ሂሳቦች ውስጥ ካለ ክፍያውን እንደገና ይቀበሉ።',
     'This bill was just paid on another screen': 'ይህ ሂሳብ በሌላ ስክሪን ተከፍሏል',
     'No payments recorded on this day.': 'በዚህ ቀን የተመዘገበ ክፍያ የለም።',
     'All Waiters': 'ሁሉም አስተናጋጆች',

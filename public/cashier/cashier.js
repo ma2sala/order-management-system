@@ -283,6 +283,34 @@
     screenshotPreviewWrap.classList.remove('hidden');
   }
 
+  // Phone photos/screenshots can be several MB — slow to send over mobile
+  // data, and the more likely the connection drops mid-upload. Scale the
+  // proof down to at most 1600px on its long side as a JPEG (still easily
+  // readable) before sending. Small files, or anything that can't be
+  // decoded, are sent as-is.
+  const PROOF_MAX_SIDE = 1600;
+  async function shrinkProof(file) {
+    if (file.size < 300 * 1024 || !window.createImageBitmap) return file;
+    try {
+      const bitmap = await createImageBitmap(file);
+      const scale = Math.min(1, PROOF_MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(bitmap.width * scale);
+      canvas.height = Math.round(bitmap.height * scale);
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff'; // transparent PNG areas would otherwise turn black in JPEG
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      if (bitmap.close) bitmap.close();
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+      if (!blob || blob.size >= file.size) return file;
+      return new File([blob], file.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' });
+    } catch (err) {
+      console.warn('Could not shrink payment proof, sending original:', err);
+      return file;
+    }
+  }
+
   const cameraFallbackInput = document.getElementById('cameraFallbackInput');
   document.getElementById('uploadScreenshotBtn').addEventListener('click', () => paymentScreenshotInput.click());
   paymentScreenshotInput.addEventListener('change', () => {
@@ -468,22 +496,32 @@
     const orderIds = [order.id];
     const paymentMethod = selectedPaymentMethod;
 
-    const formData = new FormData();
-    formData.append('orderIds', JSON.stringify(orderIds));
-    formData.append('paymentMethod', paymentMethod);
-    if (proofFile) formData.append('screenshot', proofFile);
-
     markPaidBtn.disabled = true;
     markPaidBtn.textContent = 'Processing…';
 
     try {
+      const formData = new FormData();
+      formData.append('orderIds', JSON.stringify(orderIds));
+      formData.append('paymentMethod', paymentMethod);
+      if (proofFile) formData.append('screenshot', await shrinkProof(proofFile));
+
       const paidOrders = await api('/api/payments', { method: 'POST', body: formData });
       billModal.classList.add('hidden');
       showToast('Payment recorded');
       printReceipt(paidOrders, paymentMethod);
       loadUnpaidOrders();
     } catch (err) {
-      payError.textContent = err.message || 'Failed to record payment';
+      // fetch() rejects with a TypeError when the connection drops
+      // ("Failed to fetch" / "Load failed" / "NetworkError…"). Usually
+      // that's mid-upload and nothing was saved — but it could also drop
+      // after the server saved it, so point the cashier at Open Bills
+      // rather than promising either way.
+      const isNetworkError =
+        err instanceof TypeError && /fetch|load failed|network/i.test(err.message || '');
+      payError.textContent = isNetworkError
+        ? 'Connection lost. Refresh — if this bill is still in Open Bills, take the payment again.'
+        : err.message || 'Failed to record payment';
+      if (isNetworkError) loadUnpaidOrders();
     } finally {
       markPaidBtn.disabled = false;
       markPaidBtn.textContent = 'Mark Paid & Print Receipt';
