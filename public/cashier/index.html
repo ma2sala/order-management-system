@@ -130,10 +130,19 @@
 
     <!-- ---------------- PAYMENT HISTORY ---------------- -->
     <section id="historyView" class="view-section hidden">
-      <label class="date-picker-label">
-        Day
-        <input type="date" id="historyDateInput" class="date-input" />
-      </label>
+      <div class="history-filters">
+        <label class="date-picker-label">
+          Day
+          <input type="date" id="historyDateInput" class="date-input" />
+        </label>
+        <!-- Options are filled in by cashier.js from the waiters who have payments on the selected day -->
+        <label class="date-picker-label">
+          Waiter
+          <select id="historyWaiterSelect" class="date-input waiter-select">
+            <option value="all">All Waiters</option>
+          </select>
+        </label>
+      </div>
       <div id="historyList" class="history-list"></div>
     </section>
 

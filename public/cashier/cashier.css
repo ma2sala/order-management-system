@@ -307,6 +307,26 @@ body {
   border-color: var(--glass-border-hover);
 }
 
+/* Payment History: Day + Waiter pickers side by side (wraps on phones) */
+.history-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 20px;
+}
+
+.waiter-select {
+  min-width: 160px;
+  cursor: pointer;
+}
+
+/* The open option list is drawn by the OS and ignores the glass fill,
+   so give options a solid dark background to stay readable. */
+.waiter-select option {
+  background: #1b1f27;
+  color: var(--text-main);
+}
+
 /* ---------------- Bill detail modal ---------------- */
 .modal-overlay {
   position: fixed;

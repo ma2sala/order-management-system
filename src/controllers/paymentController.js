@@ -106,16 +106,28 @@ async function recordPayment(req, res) {
   }
 }
 
-// GET /api/payments/history?date=YYYY-MM-DD — cashier or manager
+// GET /api/payments/history?date=YYYY-MM-DD[&waiter=<waiterId>] — cashier or manager
 // Defaults to "today" in Addis Ababa when no date is given, same
 // day-boundary logic orderController.js uses for its own daily views.
+// Optional ?waiter= narrows it to one waiter's orders. The Cashier screen
+// filters client-side (it needs the full day to build its waiter
+// dropdown), so this is for callers that only want one waiter's slice.
 async function paymentHistory(req, res) {
   try {
     const dayStart = addisDayStart(req.query.date);
     const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
 
+    const where = { isPaid: true, paidAt: { gte: dayStart, lt: dayEnd } };
+    const waiterParam = req.query.waiter;
+    if (waiterParam && waiterParam !== 'all') {
+      if (typeof waiterParam !== 'string') {
+        return res.status(400).json({ error: 'waiter must be a single waiter id' });
+      }
+      where.waiterId = waiterParam;
+    }
+
     const orders = await prisma.order.findMany({
-      where: { isPaid: true, paidAt: { gte: dayStart, lt: dayEnd } },
+      where,
       include: ORDER_WITH_BILL_DETAILS,
       orderBy: { paidAt: 'desc' },
     });

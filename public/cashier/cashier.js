@@ -27,6 +27,8 @@
   const tablesGrid = document.getElementById('tablesGrid');
   const historyList = document.getElementById('historyList');
   const historyDateInput = document.getElementById('historyDateInput');
+  const historyWaiterSelect = document.getElementById('historyWaiterSelect');
+  let historyOrders = []; // the selected day's paid orders, unfiltered
 
   const billModal = document.getElementById('billModal');
   const billModalTitle = document.getElementById('billModalTitle');
@@ -546,19 +548,48 @@
     loadHistory();
   });
 
+  // Waiter filter is applied client-side over the whole day's list, so
+  // changing it needs no refetch and the date filter keeps working as-is.
+  historyWaiterSelect.addEventListener('change', () => renderHistory());
+
   async function loadHistory() {
     const date = historyDateInput.value || todayISO();
     try {
-      const paid = await api(`/api/payments/history?date=${date}`);
-      renderHistory(paid);
+      historyOrders = await api(`/api/payments/history?date=${date}`);
+      populateWaiterFilter();
+      renderHistory();
     } catch (err) {
       showToast(err.message || 'Failed to load payment history', true);
     }
   }
 
-  function renderHistory(paid) {
+  // Rebuilds the dropdown from the waiters who have payments on this day.
+  // Keeps the current selection if that waiter is still in the list,
+  // otherwise falls back to "All Waiters".
+  function populateWaiterFilter() {
+    const previous = historyWaiterSelect.value;
+    const waiters = new Map();
+    historyOrders.forEach((o) => {
+      if (o.waiter) waiters.set(o.waiter.id, o.waiter.name);
+    });
+    const sorted = [...waiters].sort((a, b) => a[1].localeCompare(b[1]));
+
+    historyWaiterSelect.innerHTML =
+      '<option value="all">All Waiters</option>' +
+      sorted.map(([id, name]) => `<option value="${escapeHtml(id)}">${escapeHtml(name)}</option>`).join('');
+    historyWaiterSelect.value = waiters.has(previous) ? previous : 'all';
+  }
+
+  function renderHistory() {
+    const waiterId = historyWaiterSelect.value;
+    const paid =
+      waiterId === 'all' ? historyOrders : historyOrders.filter((o) => o.waiter && o.waiter.id === waiterId);
+
     if (paid.length === 0) {
-      historyList.innerHTML = '<div class="history-empty">No payments recorded on this day.</div>';
+      historyList.innerHTML =
+        waiterId === 'all'
+          ? '<div class="history-empty">No payments recorded on this day.</div>'
+          : '<div class="history-empty">No payments for this waiter on this day.</div>';
       return;
     }
 

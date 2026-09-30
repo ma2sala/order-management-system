@@ -213,6 +213,8 @@
     'Failed to record payment': 'ክፍያውን መመዝገብ አልተቻለም',
     'This bill was just paid on another screen': 'ይህ ሂሳብ በሌላ ስክሪን ተከፍሏል',
     'No payments recorded on this day.': 'በዚህ ቀን የተመዘገበ ክፍያ የለም።',
+    'All Waiters': 'ሁሉም አስተናጋጆች',
+    'No payments for this waiter on this day.': 'በዚህ ቀን ለዚህ አስተናጋጅ የተመዘገበ ክፍያ የለም።',
     'Reprint': 'እንደገና አትም',
     'Screenshot no longer available': 'ስክሪንሾቱ አይገኝም',
     'Failed to load open bills': 'ያልተከፈሉ ሂሳቦችን መጫን አልተቻለም',
