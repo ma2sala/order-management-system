@@ -46,9 +46,9 @@ function createApp() {
     express.static(path.join(__dirname, '..', 'uploads', 'payment-screenshots'))
   );
 
-  // Public, no login — for uptime checks. Must stay ABOVE the catalog
-  // router: that one is mounted on all of /api and requires a login for
-  // every path that reaches it, which made this return 401.
+  // Public, no login — Railway's deploy healthcheck uses this, so a
+  // deploy fails if it ever starts requiring a login. Kept first so no
+  // router mounted on /api can intercept it.
   app.get('/api/health', (req, res) => res.json({ ok: true }));
 
   app.use('/api/auth', authRouter);
