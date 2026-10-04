@@ -4,7 +4,11 @@
   let socket = null;
 
   let unpaidOrders = []; // flat list from GET /api/payments/unpaid
-  let selectedOrderId = null; // which order's bill is currently open in the modal
+  // The bill modal: which table it's for, the order that was tapped, and
+  // which of that table's unpaid orders are ticked to be paid together.
+  let billTableId = null;
+  let billFirstOrderId = null;
+  let selectedOrderIds = new Set();
 
   // ---------------- DOM refs ----------------
   const loginScreen = document.getElementById('loginScreen');
@@ -215,17 +219,16 @@
   });
 
   // ---------------- Tabs ----------------
+  function showTab(view) {
+    toggleBtns.forEach((b) => b.classList.toggle('active', b.dataset.view === view));
+    orderView.classList.toggle('hidden', view !== 'order');
+    billsView.classList.toggle('hidden', view !== 'bills');
+    historyView.classList.toggle('hidden', view !== 'history');
+    if (view === 'bills') loadUnpaidOrders();
+    if (view === 'history') loadHistory();
+  }
   toggleBtns.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      toggleBtns.forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
-      const view = btn.dataset.view;
-      orderView.classList.toggle('hidden', view !== 'order');
-      billsView.classList.toggle('hidden', view !== 'bills');
-      historyView.classList.toggle('hidden', view !== 'history');
-      if (view === 'bills') loadUnpaidOrders();
-      if (view === 'history') loadHistory();
-    });
+    btn.addEventListener('click', () => showTab(btn.dataset.view));
   });
 
   // ---------------- Open Bills ----------------
@@ -234,6 +237,9 @@
       const date = headerDateInput.value || todayISO();
       unpaidOrders = await api(`/api/payments/unpaid?date=${date}`);
       renderTablesGrid();
+      // Keep an open bill in step with the list (e.g. the extras from
+      // "+ Add Items" just came out of the kitchen and should show up).
+      if (!billModal.classList.contains('hidden')) renderBillBody();
     } catch (err) {
       showToast(err.message || 'Failed to load open bills', true);
     }
@@ -251,12 +257,17 @@
     tablesGrid.innerHTML = sorted
       .map((o) => {
         const total = orderTotal(o);
+        const sameTable = unpaidOrders.filter((x) => x.tableId === o.tableId).length;
         return `
         <div class="table-bill-card" data-order-id="${o.id}">
           <div class="table-label">#${o.id.slice(0, 6).toUpperCase()}</div>
           <div class="ticket-count">Table ${escapeHtml(o.table.label)} · ${escapeHtml(o.waiter.name)}</div>
           <div class="bill-total mono">$${total.toFixed(2)}</div>
-          <div class="view-bill-hint">Tap to view & pay →</div>
+          ${sameTable > 1 ? `<div class="same-table-hint">${sameTable} open bills on this table</div>` : ''}
+          <div class="bill-card-actions">
+            <span class="view-bill-hint">Tap to view & pay →</span>
+            <button type="button" class="add-items-btn" data-order-id="${o.id}">＋ Add Items</button>
+          </div>
         </div>`;
       })
       .join('');
@@ -264,6 +275,24 @@
     tablesGrid.querySelectorAll('.table-bill-card').forEach((card) => {
       card.addEventListener('click', () => openBillModal(card.dataset.orderId));
     });
+    tablesGrid.querySelectorAll('.add-items-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation(); // don't also open the bill
+        startAddItems(btn.dataset.orderId);
+      });
+    });
+  }
+
+  // "+ Add Items": the customer ordered more. Opens New Order with this
+  // bill's table and waitress already picked; the extras go out as their
+  // own ticket (so the kitchen/bar get only the new items), and once
+  // ready they can be paid together with this bill in one transaction.
+  function startAddItems(orderId) {
+    const order = unpaidOrders.find((o) => o.id === orderId);
+    if (!order || !orderEntry) return;
+    billModal.classList.add('hidden');
+    if (!orderEntry.startFor({ tableId: order.tableId, waiterId: order.waiterId })) return;
+    showTab('order');
   }
 
   // ---------------- Payment proof (uploaded screenshot or camera photo) ----------------
@@ -450,23 +479,54 @@
   }
 
   // ---------------- Bill detail + payment ----------------
+  // A customer who ordered 2–3 times pays once: the bill lists every
+  // unpaid order on the same table, and each ticked one goes into the same
+  // payment (one method, one screenshot, one receipt). Only the order that
+  // was tapped starts ticked — a table can be reused by a new party during
+  // the day, so the cashier ticks the others deliberately.
   function openBillModal(orderId) {
-    selectedOrderId = orderId;
-    resetPaymentForm();
-
     const order = unpaidOrders.find((o) => o.id === orderId);
     if (!order) return;
+    selectedOrderIds = new Set([orderId]);
+    billTableId = order.tableId;
+    billFirstOrderId = orderId;
+    resetPaymentForm();
+    renderBillBody();
+    billModal.classList.remove('hidden');
+  }
 
-    billModalTitle.textContent = `Order #${order.id.slice(0, 6).toUpperCase()}`;
+  function renderBillBody() {
+    // The tapped order first, then the table's others oldest first.
+    const onTable = unpaidOrders
+      .filter((o) => o.tableId === billTableId)
+      .sort((a, b) => (a.id === billFirstOrderId ? -1 : b.id === billFirstOrderId ? 1 : new Date(a.createdAt) - new Date(b.createdAt)));
+    // Drop anything paid/voided elsewhere since the bill was opened.
+    selectedOrderIds = new Set([...selectedOrderIds].filter((id) => onTable.some((o) => o.id === id)));
 
-    const total = orderTotal(order);
+    if (onTable.length === 0 || selectedOrderIds.size === 0) {
+      billModal.classList.add('hidden');
+      return;
+    }
+
+    const selected = onTable.filter((o) => selectedOrderIds.has(o.id));
+    const total = selected.reduce((s, o) => s + orderTotal(o), 0);
+    billModalTitle.textContent =
+      selected.length === 1
+        ? `Order #${selected[0].id.slice(0, 6).toUpperCase()}`
+        : `Table ${onTable[0].table.label} · ${selected.length} orders`;
 
     billBody.innerHTML = `
-        <div class="bill-ticket-group">
-          <div class="bill-ticket-header">
-            <span>Table ${escapeHtml(order.table.label)} · ${escapeHtml(order.waiter.name)}</span>
+      ${onTable.length > 1 ? `<p class="bill-combine-hint">${onTable.length} open bills on this table — tick the ones this customer is paying for.</p>` : ''}
+      ${onTable
+        .map((order) => {
+          const checked = selectedOrderIds.has(order.id);
+          return `
+        <div class="bill-ticket-group${checked ? '' : ' unselected'}">
+          <label class="bill-ticket-header">
+            ${onTable.length > 1 ? `<input type="checkbox" class="bill-order-check" data-id="${order.id}" ${checked ? 'checked' : ''} />` : ''}
+            <span class="bill-ticket-who">#${order.id.slice(0, 6).toUpperCase()} · Table ${escapeHtml(order.table.label)} · ${escapeHtml(order.waiter.name)}</span>
             <span>${new Date(order.createdAt).toLocaleTimeString()}</span>
-          </div>
+          </label>
           ${order.items
             .map((it) => {
               const summary = customizationSummary(it);
@@ -477,10 +537,22 @@
               </div>`;
             })
             .join('')}
-        </div>
-        <div class="bill-total-row"><span>Total</span><span class="mono">$${total.toFixed(2)}</span></div>`;
+          <div class="bill-subtotal-row"><span>Order total</span><span class="mono">$${orderTotal(order).toFixed(2)}</span></div>
+        </div>`;
+        })
+        .join('')}
+      <div class="bill-total-row"><span>${selected.length > 1 ? `Total (${selected.length} orders)` : 'Total'}</span><span class="mono">$${total.toFixed(2)}</span></div>
+      <button type="button" class="secondary-btn bill-add-items-btn" id="billAddItemsBtn">＋ Add Items for this table</button>`;
 
-    billModal.classList.remove('hidden');
+    billBody.querySelectorAll('.bill-order-check').forEach((box) => {
+      box.addEventListener('change', () => {
+        if (box.checked) selectedOrderIds.add(box.dataset.id);
+        else if (selectedOrderIds.size > 1) selectedOrderIds.delete(box.dataset.id);
+        else box.checked = true; // at least one order must stay selected
+        renderBillBody();
+      });
+    });
+    document.getElementById('billAddItemsBtn').addEventListener('click', () => startAddItems(billFirstOrderId));
   }
 
   billCloseBtn.addEventListener('click', () => billModal.classList.add('hidden'));
@@ -490,10 +562,8 @@
 
   markPaidBtn.addEventListener('click', async () => {
     payError.textContent = '';
-    const order = unpaidOrders.find((o) => o.id === selectedOrderId);
-    if (!order) return;
-
-    const orderIds = [order.id];
+    const orderIds = [...selectedOrderIds].filter((id) => unpaidOrders.some((o) => o.id === id));
+    if (orderIds.length === 0) return;
     const paymentMethod = selectedPaymentMethod;
 
     markPaidBtn.disabled = true;
@@ -618,6 +688,13 @@
     historyWaiterSelect.value = waiters.has(previous) ? previous : 'all';
   }
 
+  // Orders paid in one transaction share the exact same paidAt and
+  // cashier (one updateMany on the server), so that's how a combined
+  // payment is recognised again — Reprint prints the whole receipt.
+  function paymentGroup(order) {
+    return historyOrders.filter((o) => o.paidAt === order.paidAt && o.cashierId === order.cashierId);
+  }
+
   function renderHistory() {
     const waiterId = historyWaiterSelect.value;
     const paid =
@@ -643,7 +720,7 @@
         <div class="history-row" data-id="${o.id}">
           <div class="info">
             <span class="ticket-line">#${o.id.slice(0, 6).toUpperCase()} · Table ${escapeHtml(o.table.label)}</span>
-            <span class="meta-line">${escapeHtml(o.waiter.name)} · paid by ${escapeHtml((o.cashier && o.cashier.name) || '—')} · ${new Date(o.paidAt).toLocaleTimeString()}</span>
+            <span class="meta-line">${escapeHtml(o.waiter.name)} · paid by ${escapeHtml((o.cashier && o.cashier.name) || '—')} · ${new Date(o.paidAt).toLocaleTimeString()}${paymentGroup(o).length > 1 ? ` · paid together with ${paymentGroup(o).length - 1} more` : ''}</span>
           </div>
           <div class="method-cell">
             <span class="method-tag">${METHOD_LABELS[o.paymentMethod] || o.paymentMethod}</span>
@@ -664,7 +741,7 @@
     historyList.querySelectorAll('.reprint').forEach((btn) => {
       btn.addEventListener('click', () => {
         const order = paid.find((o) => o.id === btn.dataset.id);
-        if (order) printReceipt([order], order.paymentMethod);
+        if (order) printReceipt(paymentGroup(order), order.paymentMethod);
       });
     });
 
@@ -820,7 +897,7 @@
       // (markPaidBtn is disabled while THIS screen's own payment is in
       // flight — that one isn't "another screen".)
       const payingHere = markPaidBtn.disabled;
-      if (!payingHere && selectedOrderId && orderIds.includes(selectedOrderId) && !billModal.classList.contains('hidden')) {
+      if (!payingHere && orderIds.some((id) => selectedOrderIds.has(id)) && !billModal.classList.contains('hidden')) {
         billModal.classList.add('hidden');
         showToast('This bill was just paid on another screen');
       }

@@ -28,6 +28,7 @@ window.CashierOrderEntry = function mountOrderEntry({ api, showToast, escapeHtml
   let selectedWaiterId = null;
   let selectedTableId = null;
   let step = 1;
+  let addingToBill = false; // this ticket was started from Open Bills' "+ Add Items"
 
   // basket line shape (same as waiter.js):
   // { key, menuItemId, name, unitPrice, quantity, temperature,
@@ -146,6 +147,7 @@ window.CashierOrderEntry = function mountOrderEntry({ api, showToast, escapeHtml
     waiterChips.querySelectorAll('.pick-chip').forEach((chip) => {
       chip.addEventListener('click', () => {
         selectedWaiterId = chip.dataset.id;
+        addingToBill = false; // picked by hand — a regular ticket now
         afterPick();
       });
     });
@@ -165,6 +167,7 @@ window.CashierOrderEntry = function mountOrderEntry({ api, showToast, escapeHtml
     tableChips.querySelectorAll('.pick-chip').forEach((chip) => {
       chip.addEventListener('click', () => {
         selectedTableId = chip.dataset.id;
+        addingToBill = false;
         afterPick();
       });
     });
@@ -614,6 +617,7 @@ window.CashierOrderEntry = function mountOrderEntry({ api, showToast, escapeHtml
     basket = [];
     selectedWaiterId = null;
     selectedTableId = null;
+    addingToBill = false;
     orderHint.textContent = '';
     renderWaiterChips();
     renderTableChips();
@@ -650,9 +654,14 @@ window.CashierOrderEntry = function mountOrderEntry({ api, showToast, escapeHtml
       });
       // Leave Step 3 first — emptying the basket while still on the
       // summary would trip its "order is empty" bounce-back.
+      const wasAddingToBill = addingToBill; // resetTicket() clears it
       goToStep(1);
       resetTicket();
-      showToast(`Sent to kitchen/bar — Table ${table.label} for ${waiter.name}`);
+      showToast(
+        wasAddingToBill
+          ? `Extra items sent — when ready, Table ${table.label} shows another open bill; pay them together`
+          : `Sent to kitchen/bar — Table ${table.label} for ${waiter.name}`
+      );
     } catch (err) {
       showToast(err.message || 'Failed to send order', true);
     } finally {
@@ -667,7 +676,27 @@ window.CashierOrderEntry = function mountOrderEntry({ api, showToast, escapeHtml
     updateTicket();
   }
 
+  // Open Bills' "+ Add Items": start a ticket for that bill's table and
+  // waitress and go straight to the menu. Returns false if the cashier
+  // chose to keep a half-built ticket for someone else instead.
+  function startFor({ tableId, waiterId }) {
+    const differentWho = selectedTableId !== tableId || selectedWaiterId !== waiterId;
+    if (basket.length > 0 && differentWho) {
+      if (!confirm('There are items on an unsent ticket for another table. Discard them and add items for this bill?')) return false;
+      basket = [];
+      updateTicket();
+    }
+    selectedTableId = tableId;
+    // A waitress deactivated since the order can't be picked — fall back
+    // to Step 1 with the table already chosen.
+    selectedWaiterId = waiters.some((w) => w.id === waiterId) ? waiterId : null;
+    addingToBill = true;
+    if (!selectedWaiterId) goToStep(1);
+    afterPick();
+    return true;
+  }
+
   refresh().catch((err) => showToast(err.message || 'Failed to load the menu', true));
 
-  return { refresh };
+  return { refresh, startFor };
 };

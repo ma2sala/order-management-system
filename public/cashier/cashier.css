@@ -409,6 +409,96 @@ body {
   color: var(--paper);
 }
 
+/* ---- Paying several orders of one table together ---- */
+.bill-combine-hint {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--glass-fill-light);
+  border: 1px solid var(--glass-border);
+  font-size: 13px;
+  color: var(--text-main);
+}
+
+label.bill-ticket-header {
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.bill-ticket-header .bill-ticket-who {
+  flex: 1;
+  min-width: 0;
+}
+
+.bill-order-check {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--signal);
+  cursor: pointer;
+}
+
+/* An order on the table that isn't part of this payment */
+.bill-ticket-group.unselected .bill-item-row,
+.bill-ticket-group.unselected .bill-subtotal-row {
+  opacity: 0.45;
+}
+
+.bill-subtotal-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.bill-add-items-btn {
+  width: 100%;
+  margin-top: 14px;
+}
+
+/* ---- "+ Add Items" on an Open Bills card ---- */
+.table-bill-card .same-table-hint {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--wait);
+}
+
+.bill-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.add-items-btn {
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-fill-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--paper);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.add-items-btn:hover {
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-border-hover);
+}
+
+.add-items-btn:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
 .pay-controls {
   margin-top: 18px;
 }
