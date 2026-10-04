@@ -3,12 +3,13 @@
 // "<name> (Small)" and "<name> (Big)".
 //
 // Price can't be blank in the database, so each new item is created at
-// price 0 AND hidden (isAvailable: false) — nothing can be sold for $0.
-// In Manager → Menu, set each price, then switch it to Available.
+// price 0, and Available — it shows on the Cashier/Waiter screens right
+// away. Until a real price is set in Manager → Menu it rings up as $0.
 //
 // Removable ingredients / extras are copied from the original item;
 // stock links are NOT (a small and a big portion use different amounts).
-// Items that already exist by name are skipped, so it's safe to re-run.
+// Items that already exist by name aren't duplicated, so it's safe to
+// re-run; a Small/Big item an earlier run left hidden at $0 is un-hidden.
 //
 // Run on Railway (it needs the app's database connection):
 //   railway ssh --service order-management-system -- node scripts/add-takeaway-sizes.js           (dry run — writes nothing)
@@ -43,20 +44,29 @@ async function main() {
     orderBy: [{ categoryId: 'asc' }, { name: 'asc' }],
   });
 
-  const existingNames = new Set((await prisma.menuItem.findMany({ select: { name: true } })).map((m) => m.name));
+  const existing = await prisma.menuItem.findMany({
+    select: { id: true, name: true, price: true, isAvailable: true, categoryId: true },
+  });
+  const existingByName = new Map(existing.map((m) => [m.name, m]));
   const toCreate = [];
   const skipped = [];
+  const toUnhide = []; // created hidden by an earlier run of this script
   for (const food of foods) {
     for (const size of ['Small', 'Big']) {
       const name = `${food.name} (${size})`;
-      if (existingNames.has(name)) {
-        skipped.push(name);
+      const found = existingByName.get(name);
+      if (found) {
+        if (found.categoryId === takeaway.id && !found.isAvailable && Number(found.price) === 0) {
+          toUnhide.push(found);
+        } else {
+          skipped.push(name);
+        }
         continue;
       }
       toCreate.push({
         name,
         price: 0,
-        isAvailable: false, // hidden until a real price is set
+        isAvailable: true, // shows on the ordering screens now; price set later
         isFeatured: false,
         categoryId: takeaway.id,
         imageUrl: food.imageUrl,
@@ -75,7 +85,7 @@ async function main() {
     (byCategory[f.category.name] = byCategory[f.category.name] || []).push(f.name);
   });
   Object.entries(byCategory).forEach(([cat, names]) => console.log(`  ${cat}: ${names.join(', ')}`));
-  console.log(`To create: ${toCreate.length}   Already exist (skipped): ${skipped.length}`);
+  console.log(`To create: ${toCreate.length}   To un-hide: ${toUnhide.length}   Already there (skipped): ${skipped.length}`);
 
   if (!APPLY) {
     console.log('\nDRY RUN — nothing was written. Re-run with --apply to create them.');
@@ -83,12 +93,15 @@ async function main() {
   }
 
   // All or nothing — one transaction
-  const created = await prisma.$transaction(
-    toCreate.map((data) => prisma.menuItem.create({ data, select: { id: true, name: true } }))
-  );
-  console.log(`\nCreated ${created.length} items in Takeaway (price 0, hidden):`);
-  created.forEach((c) => console.log(`  ${c.name}`));
-  console.log('\nNow set their prices in Manager → Menu and switch each to Available.');
+  const results = await prisma.$transaction([
+    ...toCreate.map((data) => prisma.menuItem.create({ data, select: { id: true, name: true } })),
+    ...toUnhide.map((m) =>
+      prisma.menuItem.update({ where: { id: m.id }, data: { isAvailable: true }, select: { id: true, name: true } })
+    ),
+  ]);
+  console.log(`\nDone: ${toCreate.length} created, ${toUnhide.length} un-hidden — in Takeaway, Available, price $0:`);
+  results.forEach((c) => console.log(`  ${c.name}`));
+  console.log('\nSet their prices in Manager → Menu — until then they ring up as $0.');
   console.log('Open Manager/Cashier/Waiter screens need a refresh to see the new items.');
 }
 
