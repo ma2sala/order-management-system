@@ -492,7 +492,7 @@
     }
     (item.removedIngredients || []).forEach((ing) => lines.push(`- No ${ing}`));
     (item.selectedExtras || []).forEach((ex) => {
-      const priceText = typeof ex.price === 'number' ? ` (+$${ex.price.toFixed(2)})` : '';
+      const priceText = typeof ex.price === 'number' ? ` (+Br ${ex.price.toFixed(2)})` : '';
       lines.push(`+ ${ex.name}${priceText}`);
     });
     if (item.notes) lines.push(`Note: ${item.notes}`);

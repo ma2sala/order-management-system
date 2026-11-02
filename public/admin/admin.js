@@ -538,11 +538,11 @@
         tone: s.ordersVoided > 0 ? 'warn' : '',
         id: 'voidedCardBtn', // clickable — opens the Voided Orders list
       },
-      { label: 'Revenue (Live)', value: `$${s.liveRevenue.toFixed(2)}` },
-      { label: 'Revenue (Logged)', value: `$${s.loggedRevenue.toFixed(2)}` },
+      { label: 'Revenue (Live)', value: `Br ${s.liveRevenue.toFixed(2)}` },
+      { label: 'Revenue (Logged)', value: `Br ${s.loggedRevenue.toFixed(2)}` },
       {
         label: 'Reconciled',
-        value: s.reconciled ? '✓ Match' : `⚠ Off by $${Math.abs(s.discrepancy).toFixed(2)}`,
+        value: s.reconciled ? '✓ Match' : `⚠ Off by Br ${Math.abs(s.discrepancy).toFixed(2)}`,
         tone: s.reconciled ? 'good' : 'bad',
       },
       {
@@ -624,7 +624,7 @@
         <div class="voided-order">
           <div class="voided-order-head">
             <span class="mono">#${o.id.slice(0, 6).toUpperCase()} · Table ${escapeHtml(o.table.label)}</span>
-            <span class="mono">$${total.toFixed(2)}</span>
+            <span class="mono">Br ${total.toFixed(2)}</span>
           </div>
           <div class="details-row"><span class="details-label">Waiter</span><span>${escapeHtml(o.waiter?.name || 'Unknown')}</span></div>
           <div class="details-row"><span class="details-label">Placed</span><span>${new Date(o.createdAt).toLocaleTimeString()}</span></div>
@@ -637,7 +637,7 @@
             <div class="details-item">
               <div class="details-item-top">
                 <span>${it.quantity}× ${escapeHtml(it.menuItem.name)}</span>
-                <span class="mono">$${lineTotal(it).toFixed(2)}</span>
+                <span class="mono">Br ${lineTotal(it).toFixed(2)}</span>
               </div>
               ${summary ? `<div class="details-item-custom">${escapeHtml(summary)}</div>` : ''}
             </div>`;
@@ -656,7 +656,7 @@
       `<div class="details-divider"></div>
       <div class="details-row details-total">
         <span>Total voided (${orders.length})</span>
-        <span class="mono">$${grandTotal.toFixed(2)}</span>
+        <span class="mono">Br ${grandTotal.toFixed(2)}</span>
       </div>`;
   }
 
@@ -719,7 +719,7 @@
               <td>${rankHtml}${escapeHtml(i.name)}${categoryTagHtml(itemMidCategoryMap.get(i.name))}</td>
               <td>${categoryTypeBadgeHtml(itemTopCategoryMap.get(i.name))}</td>
               <td class="mono-cell">${i.quantity}</td>
-              <td class="mono-cell">$${i.revenue.toFixed(2)}</td>
+              <td class="mono-cell">Br ${i.revenue.toFixed(2)}</td>
             </tr>`;
             })
             .join('')}
@@ -729,7 +729,7 @@
             <td class="mono-cell"><strong>${totalQuantity}</strong></td>
             <td class="mono-cell">
               <div class="total-row-revenue-cell">
-                <strong>$${totalRevenue.toFixed(2)}</strong>
+                <strong>Br ${totalRevenue.toFixed(2)}</strong>
                 <button type="button" id="printItemsSummaryBtn" class="print-summary-btn" title="Print Summary" aria-label="Print Summary">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                 </button>
@@ -758,7 +758,7 @@
           <td>${escapeHtml(i.name)}</td>
           <td>${categoryTypeBadgeHtml(itemTopCategoryMap.get(i.name))}</td>
           <td class="mono-cell">${i.quantity}</td>
-          <td class="mono-cell">$${i.revenue.toFixed(2)}</td>
+          <td class="mono-cell">Br ${i.revenue.toFixed(2)}</td>
         </tr>`
       )
       .join('');
@@ -774,7 +774,7 @@
             <td><strong>TOTAL</strong></td>
             <td></td>
             <td class="mono-cell"><strong>${totalQuantity}</strong></td>
-            <td class="mono-cell"><strong>$${totalRevenue.toFixed(2)}</strong></td>
+            <td class="mono-cell"><strong>Br ${totalRevenue.toFixed(2)}</strong></td>
           </tr>
         </tbody>
       </table>
@@ -867,7 +867,7 @@
                 <td>${escapeHtml(o.table.label)}</td>
                 <td>${escapeHtml(o.waiter.name)}</td>
                 <td>${itemsSummary}</td>
-                <td class="mono-cell">$${total.toFixed(2)}</td>
+                <td class="mono-cell">Br ${total.toFixed(2)}</td>
                 <td><span class="status-pill" style="background:${meta.color}">${meta.label}</span></td>
                 <td>
                   <button class="small-btn view" data-id="${o.id}">View</button>
@@ -929,13 +929,13 @@
             <tr>
               <td>${escapeHtml(r.waiter)}</td>
               <td>${escapeHtml(r.name)}${r.tag}</td>
-              <td class="mono-cell">$${r.price.toFixed(2)}</td>
+              <td class="mono-cell">Br ${r.price.toFixed(2)}</td>
             </tr>`
             )
             .join('')}
           <tr class="total-row">
             <td colspan="2"><strong>Total</strong></td>
-            <td class="mono-cell"><strong>$${grandTotal.toFixed(2)}</strong></td>
+            <td class="mono-cell"><strong>Br ${grandTotal.toFixed(2)}</strong></td>
           </tr>
         </tbody>
       </table>`;
@@ -977,7 +977,7 @@
           <div class="details-item">
             <div class="details-item-top">
               <span>${it.quantity}× ${escapeHtml(it.menuItem.name)}${categoryTagHtml(midCategoryName(it.menuItem))}</span>
-              <span class="mono">$${lineTotal(it).toFixed(2)}</span>
+              <span class="mono">Br ${lineTotal(it).toFixed(2)}</span>
             </div>
             ${summary ? `<div class="details-item-custom">${escapeHtml(summary)}</div>` : ''}
           </div>`;
@@ -988,7 +988,7 @@
 
       <div class="details-row details-total">
         <span>Total</span>
-        <span class="mono">$${total.toFixed(2)}</span>
+        <span class="mono">Br ${total.toFixed(2)}</span>
       </div>
 
       <div class="details-actions-row">
@@ -1058,7 +1058,7 @@
           <div class="details-item">
             <div class="details-item-top">
               <span>${it.quantity}× ${escapeHtml(it.menuItem.name)}</span>
-              <span class="mono">$${lineTotal(it).toFixed(2)}</span>
+              <span class="mono">Br ${lineTotal(it).toFixed(2)}</span>
             </div>
             ${summary ? `<div class="details-item-custom">${escapeHtml(summary)}</div>` : ''}
           </div>`;
@@ -1069,7 +1069,7 @@
 
       <div class="details-row details-total">
         <span>Total</span>
-        <span class="mono">$${total.toFixed(2)}</span>
+        <span class="mono">Br ${total.toFixed(2)}</span>
       </div>
     `;
 
@@ -1082,19 +1082,20 @@
 
   function printReceiptFor(order, methodLabel, total) {
     const itemsHtml = order.items
-      .map((it) => `<div class="receipt-line"><span>${it.quantity}× ${escapeHtml(it.menuItem.name)}</span><span>$${lineTotal(it).toFixed(2)}</span></div>`)
+      .map((it) => `<div class="receipt-line"><span>${it.quantity}× ${escapeHtml(it.menuItem.name)}</span><span>Br ${lineTotal(it).toFixed(2)}</span></div>`)
       .join('');
 
     receiptPrintArea.innerHTML = `
       <div class="receipt-center">
-        <div><strong>RECEIPT</strong></div>
+        <div><strong>Ebony Restaurant and Lounge</strong></div>
+        <div>RECEIPT</div>
         <div>Table ${escapeHtml(order.table.label)}</div>
         <div>${new Date(order.createdAt).toLocaleString()}</div>
       </div>
       <div class="receipt-divider"></div>
       ${itemsHtml}
       <div class="receipt-divider"></div>
-      <div class="receipt-line receipt-total"><span>TOTAL</span><span>$${total.toFixed(2)}</span></div>
+      <div class="receipt-line receipt-total"><span>TOTAL</span><span>Br ${total.toFixed(2)}</span></div>
       <div class="receipt-line"><span>Server</span><span>${escapeHtml(order.waiter.name)}</span></div>
       <div class="receipt-line"><span>Payment</span><span>${escapeHtml(methodLabel)}</span></div>
       <div class="receipt-divider"></div>

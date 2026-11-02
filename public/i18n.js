@@ -61,6 +61,7 @@
     'Thank you!': 'እናመሰግናለን!',
     'OK': 'ደህና',
 
+    'Restaurant & Lounge': 'ሬስቶራንት እና ላውንጅ',
     // Screen names (under the Ebony logo) and roles
     'Cashier': 'ገንዘብ ተቀባይ',
     'Kitchen': 'ኩሽና',
@@ -450,12 +451,12 @@
     [/^(#\w+) — (.+)$/, (id, rest) => `${id} — ${tx(rest)}`], // "#AA11B — Table T2"
     [/^- No (.+)$/, (x) => `- ያለ ${x}`], // removed ingredient on a ticket
     [/^\+ ?(.+)$/, (x) => `+ ${tx(x)}`], // "+ Link", or an added extra (a name — kept)
-    [/^(\d+) items? · \$([\d.,]+)$/, (n, p) => `${n} ዕቃ · $${p}`],
+    [/^(\d+) items? · Br ([\d.,]+)$/, (n, p) => `${n} ዕቃ · ${p} ብር`],
     [/^(\d+) items?$/, (n) => `${n} ዕቃ`],
     [/^Total voided \((\d+)\)$/, (n) => `ጠቅላላ የተሰረዙ (${n})`],
     [/^(\d+) sub-categor(?:y|ies)$/, (n) => `${n} ንዑስ ምድብ`],
-    [/^\$([\d.,]+) each$/, (p) => `አንዱ $${p}`],
-    [/^\$([\d.,]+) base$/, (p) => `መነሻ $${p}`],
+    [/^Br ([\d.,]+) each$/, (p) => `አንዱ ${p} ብር`],
+    [/^Br ([\d.,]+) base$/, (p) => `መነሻ ${p} ብር`],
     [/^(\d+)m (\d+)s ago$/, (m, s) => `ከ${m} ደቂቃ ${s} ሰከንድ በፊት`],
     [/^(\d+)s ago$/, (s) => `ከ${s} ሰከንድ በፊት`],
     [/^(\d+)m ago$/, (m) => `ከ${m} ደቂቃ በፊት`],
@@ -502,7 +503,7 @@
     [/^No (drinks|food) items on the menu\.$/, (c) => `በሜኑ ላይ ${c === 'drinks' ? 'መጠጥ' : 'ምግብ'} የለም።`],
     [/^No (drinks|food) items on this day\.$/, (c) => `በዚህ ቀን ${c === 'drinks' ? 'መጠጥ' : 'ምግብ'} የለም።`],
     [/^No (drinks|food) items ordered on this day\.$/, (c) => `በዚህ ቀን የታዘዘ ${c === 'drinks' ? 'መጠጥ' : 'ምግብ'} የለም።`],
-    [/^Off by \$([\d.,]+)$/, (p) => `በ$${p} ልዩነት አለ`],
+    [/^Off by Br ([\d.,]+)$/, (p) => `በ${p} ብር ልዩነት አለ`],
     [/^This Week \((.+)\)$/, (r) => `ይህ ሳምንት (${r})`],
     [/^This Month \((.+)\)$/, (r) => `ይህ ወር (${r})`],
     [/^Delete or move its (items|categories) first$/, (x) => (x === 'items' ? 'መጀመሪያ ዕቃዎቹን ያንቀሳቅሱ ወይም ይሰርዙ' : 'መጀመሪያ ንዑስ ምድቦቹን ይሰርዙ')],

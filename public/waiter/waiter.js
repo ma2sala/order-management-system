@@ -631,7 +631,7 @@
           ${menuCardPicture(item)}
           <div>
             <div class="name">${escapeHtml(item.name)}</div>
-            <div class="price mono">$${Number(item.price).toFixed(2)}</div>
+            <div class="price mono">Br ${Number(item.price).toFixed(2)}</div>
           </div>
           <button class="add-btn" data-id="${item.id}">+</button>
         </div>`
@@ -680,7 +680,7 @@
     modalError.classList.add('hidden'); // clear any leftover error from a previous item
 
     customizeItemName.textContent = item.name;
-    customizeItemPrice.textContent = `$${Number(item.price).toFixed(2)} base`;
+    customizeItemPrice.textContent = `Br ${Number(item.price).toFixed(2)} base`;
 
     // Temperature
     if (item.hasTemperatureOption) {
@@ -729,7 +729,7 @@
           (ex) => `
           <button type="button" class="ingredient-card extra-type" data-kind="extra" data-name="${escapeHtml(ex.name)}" data-price="${ex.price}">
             <span class="ingredient-toggle-icon">+</span>
-            <span class="ingredient-card-name">${escapeHtml(ex.name)} <span class="extra-price">+$${Number(ex.price).toFixed(2)}</span></span>
+            <span class="ingredient-card-name">${escapeHtml(ex.name)} <span class="extra-price">+Br ${Number(ex.price).toFixed(2)}</span></span>
           </button>`
         )
         .join('');
@@ -779,7 +779,7 @@
 
   function updateCustomizeTotal() {
     const unit = Number(customizing.price) + extrasSum(currentCustomizeExtrasPriced());
-    customizeAddTotal.textContent = `$${(unit * customizeQty).toFixed(2)}`;
+    customizeAddTotal.textContent = `Br ${(unit * customizeQty).toFixed(2)}`;
   }
 
   customizeQtyMinus.addEventListener('click', () => {
@@ -899,7 +899,7 @@
   function updateBasketUI() {
     const { count, total } = basketTotals();
 
-    checkoutSummary.textContent = `${count} item${count === 1 ? '' : 's'} · $${total.toFixed(2)}`;
+    checkoutSummary.textContent = `${count} item${count === 1 ? '' : 's'} · Br ${total.toFixed(2)}`;
     viewOrderBtn.disabled = count === 0;
     updateMenuBadges();
 
@@ -910,7 +910,7 @@
 
   function renderCheckoutItems() {
     const { total } = basketTotals();
-    basketTotalBigEl.textContent = `$${total.toFixed(2)}`;
+    basketTotalBigEl.textContent = `Br ${total.toFixed(2)}`;
 
     basketItemsEl.innerHTML = basket
       .map((b) => {
@@ -920,7 +920,7 @@
           <div>
             <div class="basket-item-name">${escapeHtml(b.name)}</div>
             ${summary ? `<div class="item-customization">${escapeHtml(summary)}</div>` : ''}
-            <div class="basket-item-price mono">$${lineUnitPrice(b).toFixed(2)} each</div>
+            <div class="basket-item-price mono">Br ${lineUnitPrice(b).toFixed(2)} each</div>
           </div>
           <div class="qty-controls">
             <button class="qty-btn minus" data-key="${b.key}" data-delta="-1">${b.quantity === 1 ? '🗑' : '−'}</button>
@@ -1037,7 +1037,7 @@
             <div class="ticket-item-row" style="flex-direction:column;align-items:stretch;">
               <div style="display:flex;justify-content:space-between;">
                 <span>${it.quantity}× ${escapeHtml(it.menuItem.name)}</span>
-                <span class="mono">$${orderItemLineTotal(it).toFixed(2)}</span>
+                <span class="mono">Br ${orderItemLineTotal(it).toFixed(2)}</span>
               </div>
               ${summary ? `<div class="item-customization">${escapeHtml(summary)}</div>` : ''}
             </div>`;
@@ -1046,7 +1046,7 @@
           <hr class="ticket-divider" />
           <div class="ticket-total-row">
             <span>Total</span>
-            <span class="mono">$${total.toFixed(2)}</span>
+            <span class="mono">Br ${total.toFixed(2)}</span>
           </div>
           <div class="ticket-actions">
             <div class="status-chip" style="background:${meta.color}">

@@ -331,7 +331,7 @@ window.CashierOrderEntry = function mountOrderEntry({ api, showToast, escapeHtml
           <span class="card-qty mono" hidden></span>
           ${menuCardPicture(item)}
           <span class="name">${escapeHtml(item.name)}</span>
-          <span class="price mono">$${Number(item.price).toFixed(2)}</span>
+          <span class="price mono">Br ${Number(item.price).toFixed(2)}</span>
         </button>`
       )
       .join('');
@@ -377,7 +377,7 @@ window.CashierOrderEntry = function mountOrderEntry({ api, showToast, escapeHtml
     customizeError.textContent = '';
 
     customizeItemName.textContent = item.name;
-    customizeItemPrice.textContent = `$${Number(item.price).toFixed(2)} base`;
+    customizeItemPrice.textContent = `Br ${Number(item.price).toFixed(2)} base`;
 
     if (item.hasTemperatureOption) {
       temperatureSection.classList.remove('hidden');
@@ -419,7 +419,7 @@ window.CashierOrderEntry = function mountOrderEntry({ api, showToast, escapeHtml
             (ex) => `
           <button type="button" class="ingredient-card extra-type" data-kind="extra" data-name="${escapeHtml(ex.name)}">
             <span class="ingredient-toggle-icon">+</span>
-            <span class="ingredient-card-name">${escapeHtml(ex.name)} <span class="extra-price mono">+$${Number(ex.price).toFixed(2)}</span></span>
+            <span class="ingredient-card-name">${escapeHtml(ex.name)} <span class="extra-price mono">+Br ${Number(ex.price).toFixed(2)}</span></span>
           </button>`
           )
           .join('');
@@ -457,7 +457,7 @@ window.CashierOrderEntry = function mountOrderEntry({ api, showToast, escapeHtml
 
   function updateCustomizeTotal() {
     const unit = Number(customizing.price) + extrasSum(currentCustomizeExtrasPriced());
-    customizeAddTotal.textContent = `$${(unit * customizeQty).toFixed(2)}`;
+    customizeAddTotal.textContent = `Br ${(unit * customizeQty).toFixed(2)}`;
   }
 
   customizeQtyMinus.addEventListener('click', () => {
@@ -567,7 +567,7 @@ window.CashierOrderEntry = function mountOrderEntry({ api, showToast, escapeHtml
   function updateTicket() {
     const count = basket.reduce((s, b) => s + b.quantity, 0);
     const total = basketTotal();
-    checkoutSummary.textContent = `${count} item${count === 1 ? '' : 's'} · $${total.toFixed(2)}`;
+    checkoutSummary.textContent = `${count} item${count === 1 ? '' : 's'} · Br ${total.toFixed(2)}`;
     viewOrderBtn.disabled = count === 0;
     updateMenuBadges();
     if (step === 3) renderCheckoutItems();
@@ -581,7 +581,7 @@ window.CashierOrderEntry = function mountOrderEntry({ api, showToast, escapeHtml
       goToStep(2);
       return;
     }
-    basketTotalEl.textContent = `$${basketTotal().toFixed(2)}`;
+    basketTotalEl.textContent = `Br ${basketTotal().toFixed(2)}`;
     basketItemsEl.innerHTML = basket
       .map((b) => {
         const summary = customizationSummary(b);
@@ -590,7 +590,7 @@ window.CashierOrderEntry = function mountOrderEntry({ api, showToast, escapeHtml
           <div class="basket-item-info">
             <div class="basket-item-name">${escapeHtml(b.name)}</div>
             ${summary ? `<div class="item-customization">${escapeHtml(summary)}</div>` : ''}
-            <div class="basket-item-price mono">$${lineUnitPrice(b).toFixed(2)} each</div>
+            <div class="basket-item-price mono">Br ${lineUnitPrice(b).toFixed(2)} each</div>
           </div>
           <div class="qty-controls">
             <button type="button" class="qty-btn minus" data-key="${escapeHtml(b.key)}" data-delta="-1" aria-label="Remove one">${b.quantity === 1 ? '🗑' : '−'}</button>

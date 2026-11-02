@@ -252,6 +252,16 @@ input {
   font-size: 52px;
 }
 
+/* "Restaurant & Lounge" under the wordmark — sign-in card only */
+.brand-tagline {
+  margin: 2px 0 6px;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  color: #e2b866;
+}
+
 .login-card .brand-role {
   font-size: 11px;
 }

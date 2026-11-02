@@ -235,7 +235,7 @@
         <div class="table-bill-card" data-order-id="${o.id}">
           <div class="table-label">#${o.id.slice(0, 6).toUpperCase()}</div>
           <div class="ticket-count">Table ${escapeHtml(o.table.label)} · ${escapeHtml(o.waiter.name)}</div>
-          <div class="bill-total mono">$${total.toFixed(2)}</div>
+          <div class="bill-total mono">Br ${total.toFixed(2)}</div>
           ${sameTable > 1 ? `<div class="same-table-hint">${sameTable} open bills on this table</div>` : ''}
           <div class="bill-card-actions">
             <span class="view-bill-hint">Tap to view & pay →</span>
@@ -506,15 +506,15 @@
               return `
               <div class="bill-item-row">
                 <span>${it.quantity}× ${escapeHtml(it.menuItem.name)}${summary ? `<br/><span class="bill-item-custom">${escapeHtml(summary)}</span>` : ''}</span>
-                <span class="mono">$${lineTotal(it).toFixed(2)}</span>
+                <span class="mono">Br ${lineTotal(it).toFixed(2)}</span>
               </div>`;
             })
             .join('')}
-          <div class="bill-subtotal-row"><span>Order total</span><span class="mono">$${orderTotal(order).toFixed(2)}</span></div>
+          <div class="bill-subtotal-row"><span>Order total</span><span class="mono">Br ${orderTotal(order).toFixed(2)}</span></div>
         </div>`;
         })
         .join('')}
-      <div class="bill-total-row"><span>${selected.length > 1 ? `Total (${selected.length} orders)` : 'Total'}</span><span class="mono">$${total.toFixed(2)}</span></div>
+      <div class="bill-total-row"><span>${selected.length > 1 ? `Total (${selected.length} orders)` : 'Total'}</span><span class="mono">Br ${total.toFixed(2)}</span></div>
       <button type="button" class="secondary-btn bill-add-items-btn" id="billAddItemsBtn">＋ Add Items for this table</button>`;
 
     billBody.querySelectorAll('.bill-order-check').forEach((box) => {
@@ -595,7 +595,7 @@
         ${o.items
           .map(
             (it) => `
-        <div class="receipt-line"><span>${it.quantity}× ${escapeHtml(it.menuItem.name)}</span><span>$${lineTotal(it).toFixed(2)}</span></div>`
+        <div class="receipt-line"><span>${it.quantity}× ${escapeHtml(it.menuItem.name)}</span><span>Br ${lineTotal(it).toFixed(2)}</span></div>`
           )
           .join('')}
         <div class="receipt-divider"></div>`
@@ -606,13 +606,14 @@
 
     receiptPrintArea.innerHTML = `
       <div class="receipt-center">
-        <div><strong>RECEIPT</strong></div>
+        <div><strong>Ebony Restaurant and Lounge</strong></div>
+        <div>RECEIPT</div>
         <div>Table ${escapeHtml(tableLabel)}</div>
         <div>${now.toLocaleString()}</div>
       </div>
       <div class="receipt-divider"></div>
       ${itemsHtml}
-      <div class="receipt-line receipt-total"><span>TOTAL</span><span>$${total.toFixed(2)}</span></div>
+      <div class="receipt-line receipt-total"><span>TOTAL</span><span>Br ${total.toFixed(2)}</span></div>
       <div class="receipt-line"><span>Payment</span><span>${escapeHtml(methodLabel)}</span></div>
       <div class="receipt-line"><span>Cashier</span><span>${escapeHtml(cashierName)}</span></div>
       ${hasScreenshot ? '<div class="receipt-line"><span>Proof</span><span>Screenshot on file</span></div>' : ''}
@@ -699,7 +700,7 @@
             <span class="method-tag">${METHOD_LABELS[o.paymentMethod] || o.paymentMethod}</span>
           </div>
           <div class="amount-cell">
-            <span class="amount mono">$${total.toFixed(2)}</span>
+            <span class="amount mono">Br ${total.toFixed(2)}</span>
           </div>
           <div class="view-cell">
             <button type="button" class="small-btn view-screenshot" data-url="${escapeHtml(o.paymentScreenshotUrl || '')}" ${hasScreenshot ? '' : 'disabled style="visibility:hidden"'}>📷 View</button>

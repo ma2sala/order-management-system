@@ -76,6 +76,36 @@ function withStations(order) {
 function withStationsMany(orders) {
   return orders.map(withStations);
 }
+// Adds up how much of each linked stock item a list of order lines uses
+// (MenuItemStock.qtyPerSale × line quantity) and moves those amounts on
+// the StockItem rows — direction -1 when an order is placed, +1 when a
+// manager voids it. Runs inside the caller's transaction so an order and
+// its stock change always land (or fail) together. Returns true if any
+// stock item actually changed, so the caller knows to tell the manager
+// dashboard to refresh its Stock tab.
+async function moveStockForLines(tx, lines, direction) {
+  const menuItemIds = [...new Set(lines.map((l) => l.menuItemId))];
+  if (menuItemIds.length === 0) return false;
+  const links = await tx.menuItemStock.findMany({ where: { menuItemId: { in: menuItemIds } } });
+  if (links.length === 0) return false;
+
+  const totals = new Map(); // stockItemId -> amount used by these lines
+  for (const line of lines) {
+    const qty = Number(line.quantity) || 1;
+    for (const link of links) {
+      if (link.menuItemId !== line.menuItemId) continue;
+      totals.set(link.stockItemId, (totals.get(link.stockItemId) || 0) + Number(link.qtyPerSale) * qty);
+    }
+  }
+  for (const [stockItemId, amount] of totals) {
+    await tx.stockItem.update({
+      where: { id: stockItemId },
+      data: { quantity: direction < 0 ? { decrement: amount } : { increment: amount } },
+    });
+  }
+  return totals.size > 0;
+}
+
 async function createOrder(req, res) {
   const { tableId, items } = req.body; // items: [{ menuItemId, quantity, notes }]
   const enteredById = req.user.id;
@@ -122,56 +152,64 @@ async function createOrder(req, res) {
     const hasKitchen = stationsNeeded.has('kitchen');
     const hasBar = stationsNeeded.has('bar');
 
-    const order = await prisma.order.create({
-      data: {
-        tableId,
-        waiterId,
-        status: 'PENDING',
-        kitchenStatus: hasKitchen ? 'PENDING' : null,
-        barStatus: hasBar ? 'PENDING' : null,
-        items: {
-          // Customizations sent by the waiter — temperature,
-          // removedIngredients, and extraNames — were being silently
-          // dropped here before: only menuItemId/quantity/notes/unitPrice
-          // ever made it into the create() call, so nothing was ever
-          // saved to the database regardless of what the customize
-          // modal collected. This is why every KDS "View Details" modal
-          // showed "No customizations" even for genuinely modified
-          // items — there was truly nothing there to show.
-          create: items.map((i) => {
-            const menuItem = menuItemMap[i.menuItemId];
-            const extraNames = Array.isArray(i.extraNames) ? i.extraNames : [];
-            // Resolve each requested extra's name against this menu
-            // item's own extraOptions to snapshot its price at order
-            // time (matches the schema's documented shape for
-            // selectedExtras) — a bare name string isn't enough on its
-            // own to know what it cost when this order was placed.
-            const selectedExtras = extraNames
-              .map((name) => {
-                const opt = (menuItem.extraOptions || []).find((e) => e.name === name);
-                return opt ? { name: opt.name, price: opt.price } : null;
-              })
-              .filter(Boolean);
+    let stockChanged = false;
+    const order = await prisma.$transaction(async (tx) => {
+      const created = await tx.order.create({
+        data: {
+          tableId,
+          waiterId,
+          status: 'PENDING',
+          kitchenStatus: hasKitchen ? 'PENDING' : null,
+          barStatus: hasBar ? 'PENDING' : null,
+          items: {
+            // Customizations sent by the waiter — temperature,
+            // removedIngredients, and extraNames — were being silently
+            // dropped here before: only menuItemId/quantity/notes/unitPrice
+            // ever made it into the create() call, so nothing was ever
+            // saved to the database regardless of what the customize
+            // modal collected. This is why every KDS "View Details" modal
+            // showed "No customizations" even for genuinely modified
+            // items — there was truly nothing there to show.
+            create: items.map((i) => {
+              const menuItem = menuItemMap[i.menuItemId];
+              const extraNames = Array.isArray(i.extraNames) ? i.extraNames : [];
+              // Resolve each requested extra's name against this menu
+              // item's own extraOptions to snapshot its price at order
+              // time (matches the schema's documented shape for
+              // selectedExtras) — a bare name string isn't enough on its
+              // own to know what it cost when this order was placed.
+              const selectedExtras = extraNames
+                .map((name) => {
+                  const opt = (menuItem.extraOptions || []).find((e) => e.name === name);
+                  return opt ? { name: opt.name, price: opt.price } : null;
+                })
+                .filter(Boolean);
 
-            return {
-              menuItemId: i.menuItemId,
-              quantity: i.quantity || 1,
-              notes: i.notes || null,
-              unitPrice: priceMap[i.menuItemId],
-              temperature: i.temperature || null,
-              removedIngredients: Array.isArray(i.removedIngredients) ? i.removedIngredients : [],
-              selectedExtras: selectedExtras.length > 0 ? selectedExtras : null,
-            };
-          }),
+              return {
+                menuItemId: i.menuItemId,
+                quantity: i.quantity || 1,
+                notes: i.notes || null,
+                unitPrice: priceMap[i.menuItemId],
+                temperature: i.temperature || null,
+                removedIngredients: Array.isArray(i.removedIngredients) ? i.removedIngredients : [],
+                selectedExtras: selectedExtras.length > 0 ? selectedExtras : null,
+              };
+            }),
+          },
+          statusLogs: {
+            create: { fromStatus: null, toStatus: 'PENDING', changedById: enteredById },
+          },
         },
-        statusLogs: {
-          create: { fromStatus: null, toStatus: 'PENDING', changedById: enteredById },
-        },
-      },
-      include: { items: { include: { menuItem: { include: MENU_ITEM_CATEGORY_TREE_INCLUDE } } }, table: true, waiter: true },
+        include: { items: { include: { menuItem: { include: MENU_ITEM_CATEGORY_TREE_INCLUDE } } }, table: true, waiter: true },
+      });
+      // Selling an item draws down whatever stock it's linked to on the
+      // Stock tab (e.g. one Habesha Beer = 1 bottle).
+      stockChanged = await moveStockForLines(tx, created.items, -1);
+      return created;
     });
 
     withStations(order);
+    if (stockChanged) getIO().to('manager_channel').emit('stock_changed');
 
     await logOrderCreated(order, req);
 
@@ -337,20 +375,27 @@ async function voidOrder(req, res) {
   const managerId = req.user.id;
 
   try {
-    const existing = await prisma.order.findUnique({ where: { id } });
+    const existing = await prisma.order.findUnique({ where: { id }, include: { items: true } });
     if (!existing) return res.status(404).json({ error: 'Order not found' });
 
-    const voided = await prisma.order.update({
-      where: { id },
-      data: {
-        isVoided: true,
-        voidedById: managerId,
-        voidReason: reason || 'No reason provided',
-        voidedAt: new Date(),
-        status: 'VOIDED',
-        statusLogs: { create: { fromStatus: existing.status, toStatus: 'VOIDED', changedById: managerId } },
-      },
+    // A voided order's items were never sold, so their stock goes back —
+    // but only the first time, so voiding twice can't add stock twice.
+    let stockChanged = false;
+    const voided = await prisma.$transaction(async (tx) => {
+      if (!existing.isVoided) stockChanged = await moveStockForLines(tx, existing.items, +1);
+      return tx.order.update({
+        where: { id },
+        data: {
+          isVoided: true,
+          voidedById: managerId,
+          voidReason: reason || 'No reason provided',
+          voidedAt: new Date(),
+          status: 'VOIDED',
+          statusLogs: { create: { fromStatus: existing.status, toStatus: 'VOIDED', changedById: managerId } },
+        },
+      });
     });
+    if (stockChanged) getIO().to('manager_channel').emit('stock_changed');
 
     getIO().to('barista_channel').emit('order_voided', { orderId: id });
     getIO().to('chef_channel').emit('order_voided', { orderId: id });
